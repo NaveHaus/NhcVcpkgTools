@@ -35,10 +35,6 @@
     FunctionsToExport    = @(
         'Export-NhcVcpkgPorts'
         'Install-NhcVcpkgPorts'
-        'Find-NhcVcpkgCommand'
-        'Get-NhcVcpkgCommonParameters'
-        'Get-NhcVcpkgDefaultTriplet'
-        'Get-NhcVcpkgRoot'
     )
 
     # List of all files packaged with this module

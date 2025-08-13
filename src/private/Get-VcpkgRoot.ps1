@@ -1,6 +1,6 @@
 Set-StrictMode -Version 3.0
 
-function Get-NhcVcpkgRoot {
+function Get-VcpkgRoot {
     <#
     .SYNOPSIS
     Returns RootDir if passed and it contains a .vcpkg-root file, or $env:VCPKG_ROOT otherwise.

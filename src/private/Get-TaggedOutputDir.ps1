@@ -22,8 +22,12 @@ function Get-TaggedOutputDir {
     #>
 
     param (
-        [Parameter(Mandatory = $true)] [string]$OutputDir,
-        [AllowEmptyString()] [string]$Tag,
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDir,
+
+        [AllowEmptyString()]
+        [string]$Tag,
+
         [switch]$AllowCwd
     )
 

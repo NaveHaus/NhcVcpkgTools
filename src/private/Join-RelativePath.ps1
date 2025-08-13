@@ -15,10 +15,10 @@ function Join-RelativePath {
     If passed, the combined path must exist or an error is raised.
     #>
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [string]$Path,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 1)]
         [string]$ChildPath,
 
         [switch]$Resolve
@@ -33,7 +33,7 @@ function Join-RelativePath {
     }
 
     if (Test-AbsolutePath -Path $ChildPath) {
-        throw "Cannot make absolute path '$ChildPath' relative."
+        throw "Cannot make absolute path '$ChildPath' relative to '$Path'."
     }
 
     return Join-Path -Path $Path -ChildPath $ChildPath -Resolve:$Resolve

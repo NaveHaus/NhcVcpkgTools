@@ -6,7 +6,7 @@ function Test-PathString {
     Returns $true if Path contains only valid path characters, $false otherwise.
     #>
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [string]$Path
     )
 

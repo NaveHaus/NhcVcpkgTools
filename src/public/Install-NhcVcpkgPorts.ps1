@@ -10,14 +10,8 @@ function Install-NhcVcpkgPorts {
 
     Note: Requires vcpkg 2024-11-12 or newer for '--classic' support.
 
-    .PARAMETER Ports
-    Installs only the specified ports. Note that vcpkg will be called with '--classic' to ignore a manifest file if present. Cannot be combined with All.
-
-    .PARAMETER All
-    Installs ports defined by a manifest that is found automatically by vcpkg or specified by ManifestRoot. Cannot be combined with Ports.
-
     .PARAMETER OutputDir
-    Specifies a directory in which to build and install the selected ports. Defaults to './build'. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not specified.
+    Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not specified.
 
     .PARAMETER Tag
     Creates a subdirectory under OutputDir in which to build and install the ports. If a string is specified, it will be used for the directory name.
@@ -26,7 +20,13 @@ function Install-NhcVcpkgPorts {
     .PARAMETER Quiet
     Suppresses all output from the vcpkg command, including errors.
 
-    .PARAMETER Vcpkg
+    .PARAMETER Ports
+    Installs only the specified ports. Note that vcpkg will be called with '--classic' to ignore a manifest file if present. Cannot be combined with All.
+
+    .PARAMETER All
+    Installs ports defined by a manifest that is found automatically by vcpkg or specified by ManifestRoot. Cannot be combined with Ports.
+
+    .PARAMETER Command
     Specifies the path to the vcpkg executable to call.
 
     .PARAMETER Triplet
@@ -128,64 +128,43 @@ function Install-NhcVcpkgPorts {
         [string[]]$OverlayPorts
     )
 
-    $private:splat = @{}
-    if ($PSBoundParameters.ContainsKey("Vcpkg")) {
-        $splat.Vcpkg = $PSBoundParameters.Vcpkg
-    }
-    $private:exe = Find-NhcVcpkgCommand @splat
-
-    $private:verb = 'install'
-    $private:params = @()
-    $private:splat = @{}
-
-    # Force classic mode if ports are specified, manifest mode otherwise:
-    if ($PSBoundParameters.ContainsKey("Ports")) {
-        $params += $PSBoundParameters["Ports"]
-        $params += "--classic"
-    }
-    else {
-        $params += "--x-all-installed"
-    }
-
-    if ($PSBoundParameters.ContainsKey("RootDir")) {
-        $splat = @{ RootDir = $PSBoundParameters.RootDir }
-    }
-    $private:vcpkg_root = Get-NhcVcpkgRoot @splat
-    $params += "--vcpkg-root=$vcpkg_root"
-    Write-Verbose "Using vcpkg root at '$vcpkg_root'"
-
-
-    # Generate OutputDir for installs:
-    $splat = @{ AllowCwd = $false }
+    # Generate a custom OutputDir for installs:
+    $private:splat = $null
+    $private:outdir = $null
+    $private:tag = $null
     if ($PSBoundParameters.ContainsKey("OutputDir")) {
         $splat.OutputDir = $PSBoundParameters.OutputDir
     }
     if ($PSBoundParameters.ContainsKey("Tag")) {
         $splat.Tag = $PSBoundParameters.Tag
     }
-    if (-not $PSBoundParameters.ContainsKey("OutputDir")) {
-        $splat.OutputDir = './build'
-    }
-    $private:outdir, $private:tag = Get-TaggedOutputDir @splat
 
-    $params += Get-NhcVcpkgCommonParameters $PSBoundParameters -OutputDir $outdir
-
-    if ($WhatIfPreference) {
-        $params += "--dry-run"
+    if ($null -ne $splat) {
+        $private:outdir, $private:tag = Get-TaggedOutputDir @splat -AllowCwd:$false
     }
 
-    if ($WhatIfPreference) {
-        Write-Host "Whatif: Would execute $exe $verb $($params -join ' ')"
+    $cmdline, $root = Get-CommonArguments -Verb 'install' -OutputDir $outdir -Parameters $PSBoundParameters
+
+    if ($null -eq $outdir) {
+        $outdir = $root
+    }
+
+    Write-Verbose "Using output directory '$outdir'"
+
+    $cmd = $cmdline -join ' '
+    if ($PSCmdlet.ShouldProcess('vcpkg install')) {
+        Write-Verbose "Executing '$cmd'"
     }
     else {
-        Write-Verbose "Executing $exe $cmd $($params -join ' ')"
+        Write-Host "Whatif: Would execute '$cmd'"
+        $cmd += " --dry-run"
     }
 
     if ($Quiet) {
-        & $exe $verb @params 2>&1 | Out-Null
+        & $cmd 2>&1 | Out-Null
     }
     else {
-        & $exe $verb @params
+        & $cmd
     }
 
     return $outdir, $tag

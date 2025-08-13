@@ -1,12 +1,15 @@
 Set-StrictMode -Version 3.0
 
-function Get-NhcVcpkgDefaultTriplet {
+function Get-DefaultTriplet {
     <#
     .SYNOPSIS
     Returns returns the first defined of $Triplet, $env:VCPKG_DEFAULT_TRIPLET, or a detected triplet.
 
     .PARAMETER Triplet
     Specifies the target triplet (e.g., x64-windows).
+
+    .PARAMETER Parameters
+    Specifies a hashtable of name-value pairs in which to lookup the Triplet parameter.
 
     .OUTPUTS
     A string containing the detected vcpkg triplet.
@@ -16,14 +19,26 @@ function Get-NhcVcpkgDefaultTriplet {
     - Only x32, x64, and arm architectures are currently recognized.
     #>
 
+    [CmdletBinding(DefaultParameterSetName = "Triplet")]
     param (
-        [Parameter(Mandatory = $false)]
-        [string]$Triplet
+        [Parameter(Mandatory = $false, Position = 0, ParameterSetName = "Triplet")]
+        [string]$Triplet,
+
+        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = "Parameters")]
+        [hashtable]$Parameters
     )
 
     $private:detected = $null
-    if ($PSBoundParameters.ContainsKey("Triplet")) {
-        $detected = $PSBoundParameters.Triplet
+    if ($PSCmdlet.ParameterSetName -eq "Parameters") {
+        if ($Parameters.ContainsKey("Triplet")) {
+            $detected = $Parameters.Triplet
+        }
+    }
+
+    else {
+        if ($PSBoundParameters.ContainsKey("Triplet")) {
+            $detected = $PSBoundParameters.Triplet
+        }
     }
 
     if ([string]::IsNullOrWhiteSpace($detected)) {

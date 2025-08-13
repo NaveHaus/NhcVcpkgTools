@@ -2,20 +2,21 @@
 $private:Root = $PSScriptRoot
 
 $private:PrivateFunctions = @(
+    'Get-CommonArguments'
+    'Get-DefaultTriplet'
+    'Get-Executable'
     'Get-TaggedOutputDir'
     'Join-RelativePath'
     'Test-AbsolutePath'
     'Test-FileNameString'
+    'Test-Executable'
     'Test-PathString'
+    'Test-VcpkgRoot'
 )
 
 $private:PublicFunctions = @(
     'Export-NhcVcpkgPorts'
     'Install-NhcVcpkgPorts'
-    'Find-NhcVcpkgCommand'
-    'Get-NhcVcpkgCommonParameters'
-    'Get-NhcVcpkgDefaultTriplet'
-    'Get-NhcVcpkgRoot'
 )
 
 $PrivateFunctions | ForEach-Object {
