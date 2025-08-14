@@ -2,14 +2,16 @@
 $private:Root = $PSScriptRoot
 
 $private:PrivateFunctions = @(
+    'ConvertTo-NormalizedPath'
     'Get-CommonArguments'
     'Get-DefaultTriplet'
     'Get-Executable'
+    'Get-PathInfo'
     'Get-TaggedOutputDir'
     'Join-RelativePath'
     'Test-AbsolutePath'
-    'Test-FileNameString'
     'Test-Executable'
+    'Test-FileNameString'
     'Test-PathString'
     'Test-VcpkgRoot'
 )
