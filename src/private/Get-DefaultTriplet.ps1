@@ -28,35 +28,41 @@ function Get-DefaultTriplet {
         [hashtable]$Parameters
     )
 
-    $private:detected = $null
-    if ($PSCmdlet.ParameterSetName -eq "Parameters") {
-        if ($Parameters.ContainsKey("Triplet")) {
-            $detected = $Parameters.Triplet
-        }
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    else {
-        if ($PSBoundParameters.ContainsKey("Triplet")) {
-            $detected = $PSBoundParameters.Triplet
+    process {
+        $private:detected = $null
+        if ($PSCmdlet.ParameterSetName -eq "Parameters") {
+            if ($Parameters.ContainsKey("Triplet")) {
+                $detected = $Parameters.Triplet
+            }
         }
-    }
 
-    if ([string]::IsNullOrWhiteSpace($detected)) {
-        $private:detected = $env:VCPKG_DEFAULT_TRIPLET;
+        else {
+            if ($PSBoundParameters.ContainsKey("Triplet")) {
+                $detected = $Triplet
+            }
+        }
+
         if ([string]::IsNullOrWhiteSpace($detected)) {
-            $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLower()
-            $os = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
+            $private:detected = $env:VCPKG_DEFAULT_TRIPLET;
+            if ([string]::IsNullOrWhiteSpace($detected)) {
+                $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLower()
+                $os = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
 
-            switch -Regex ($os) {
-                "windows" { $detected = "$arch-windows" }
-                "linux" { $detected = "$arch-linux" }
-                "darwin|macos" { $detected = "$arch-osx" }
-                default {
-                    throw "Unrecognized OS '$os'."
+                switch -Regex ($os) {
+                    "windows" { $detected = "$arch-windows" }
+                    "linux" { $detected = "$arch-linux" }
+                    "darwin|macos" { $detected = "$arch-osx" }
+                    default {
+                        Write-Error "Unrecognized OS '$os'."
+                    }
                 }
             }
         }
-    }
 
-    return $detected
+        return $detected
+    }
 }

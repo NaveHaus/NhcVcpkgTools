@@ -1,5 +1,8 @@
 Set-StrictMode -Version 3.0
 
+. $PSScriptRoot\Test-FileNameString.ps1
+. $PSScriptRoot\Test-PathString.ps1
+
 function Get-Executable {
     <#
     .SYNOPSIS
@@ -31,30 +34,36 @@ function Get-Executable {
         [string]$Name
     )
 
-    if (-not (Test-FileNameString -FileName $Name)) {
-        throw "'$Name' is not a valid filename."
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    $private:old = $env:PATH
-    if ($PSCmdlet.ParameterSetName -eq "Path") {
-        if (-not (Test-PathString -Path $Path)) {
-            throw "'$Path' is not a valid path."
+    process {
+        if (-not (Test-FileNameString -FileName $Name)) {
+            Write-Error "'$Name' is not a valid filename."
         }
 
-        if (-not (Test-Path -Path $Path -PathType Container)) {
-            throw "'$Path' does not exist, is inaccessbile, or is not a directory."
+        $private:old = $env:PATH
+        if ($PSCmdlet.ParameterSetName -eq "Path") {
+            if (-not (Test-PathString -Path $Path)) {
+                Write-Error "'$Path' is not a valid path."
+            }
+
+            if (-not (Test-Path -Path $Path -PathType Container)) {
+                Write-Error "'$Path' does not exist, is inaccessbile, or is not a directory."
+            }
+
+            $private:full = Resolve-Path -Path $Path -Force
+            $env:PATH = $full
         }
 
-        $private:full = Resolve-Path -Path $Path -Force
-        $env:PATH = $full
-    }
+        try {
+            $private:exe = (Get-Command -CommandType Application -Name $Name -TotalCount 1).Source
+        }
+        finally {
+            $env:PATH = $old
+        }
 
-    try {
-        $private:exe = (Get-Command -CommandType Application -Name $Name -TotalCount 1).Source
+        return $exe
     }
-    finally {
-        $env:PATH = $old
-    }
-
-    return $exe
 }
