@@ -1,5 +1,9 @@
 Set-StrictMode -Version 3.0
 
+. $PSScriptRoot\..\private\ConvertTo-NormalizedPath.ps1
+. $PSScriptRoot\..\private\Get-CommonArguments.ps1
+. $PSScriptRoot\..\private\Get-TaggedOutputDir.ps1
+
 function Install-NhcVcpkgPorts {
     <#
     .SYNOPSIS
@@ -14,8 +18,7 @@ function Install-NhcVcpkgPorts {
     Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not specified.
 
     .PARAMETER Tag
-    Creates a subdirectory under OutputDir in which to build and install the ports. If a string is specified, it will be used for the directory name.
-    Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+    Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
 
     .PARAMETER Quiet
     Suppresses all output from the vcpkg command, including errors.
@@ -54,7 +57,7 @@ function Install-NhcVcpkgPorts {
     Specifies one or more paths to overlay ports.
 
     .EXAMPLE
-    Install-NhcVcpkgPorts -All -Tag
+    Install-NhcVcpkgPorts -All -Tag ''
 
     Builds and installs all ports defined by the default manifest file to './build/<yyMMdd-hhmmss>' for the default target triplet.
 
@@ -74,10 +77,22 @@ function Install-NhcVcpkgPorts {
     Builds and installs all ports defined by the default manifest to '/vcpkg-releases/2025-07-25' for the x64-linux triplet.
 
     .OUTPUTS
-    Strings holding the generated OutputDir and Tag.
+    Returns a hashtable with fields:
+    - Command: the full vcpkg executable path
+    - Arguments: An array of strings that can be used to invoke vcpkg using Start-Process.
+    - RootDir: The vcpkg root directory.
+    - BaseDir = @{ Path, Exists }: OutputDir without the Tag if OutputDir was passed, $null otherwise.
+    - OutputDir = @{ Path, Exists }: The output directory including the Tag if it was passed or generated.
+    - DownloadDir = @{ Path, Exists }: The string passed to --downloads-root.
+    - BuildDir = @{ Path, Exists }: The string passed to --x-buildtrees-root.
+    - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root.
+    - InstallDir = @{ Path, Exists }: The string passed to --x-install-root.
+    - Tag: The tag if one was passed or generated, $null otherwise.
+
+    The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked.
 
     .LINK
-    https://learn.microsoft.com/en-us/vcpkg/commands/export
+    https://learn.microsoft.com/en-us/vcpkg/commands/install
     #>
 
     [CmdletBinding(DefaultParameterSetName = "Ports", SupportsShouldProcess = $true)]
@@ -94,7 +109,8 @@ function Install-NhcVcpkgPorts {
 
         [Parameter(ParameterSetName = "Ports")]
         [Parameter(ParameterSetName = "All")]
-        [AllowEmptyString()][string]$Tag,
+        [AllowEmptyString()]
+        [string]$Tag,
 
         [Parameter(ParameterSetName = "Ports")]
         [Parameter(ParameterSetName = "All")]
@@ -102,7 +118,7 @@ function Install-NhcVcpkgPorts {
 
         [Parameter(ParameterSetName = "Ports")]
         [Parameter(ParameterSetName = "All")]
-        [string]$Vcpkg,
+        [string]$Command,
 
         [Parameter(ParameterSetName = "Ports")]
         [Parameter(ParameterSetName = "All")]
@@ -128,44 +144,105 @@ function Install-NhcVcpkgPorts {
         [string[]]$OverlayPorts
     )
 
-    # Generate a custom OutputDir for installs:
-    $private:splat = $null
-    $private:outdir = $null
-    $private:tag = $null
-    if ($PSBoundParameters.ContainsKey("OutputDir")) {
-        $splat.OutputDir = $PSBoundParameters.OutputDir
-    }
-    if ($PSBoundParameters.ContainsKey("Tag")) {
-        $splat.Tag = $PSBoundParameters.Tag
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    if ($null -ne $splat) {
-        $private:outdir, $private:tag = Get-TaggedOutputDir @splat -AllowCwd:$false
-    }
+    process {
+        $private:splat = $null
 
-    $cmdline, $root = Get-CommonArguments -Verb 'install' -OutputDir $outdir -Parameters $PSBoundParameters
+        # Generate a custom OutputDir for installs if requested:
+        if ($PSBoundParameters.ContainsKey("OutputDir")) {
+            $splat += @{ OutputDir = $OutputDir }
+        }
+        if ($PSBoundParameters.ContainsKey("Tag")) {
+            $splat += @{ Tag = $Tag }
+        }
+        $private:tagged = Get-TaggedOutputDir @splat -Normalize -AllowCwd:$false
+        $splat = $null
 
-    if ($null -eq $outdir) {
-        $outdir = $root
-    }
+        # Build the common vcpkg arguments list:
+        if ($null -ne $tagged.OutputDir) {
+            $splat += @{ OutputDir = $tagged.OutputDir.Path }
+        }
+        $private:config = Get-CommonArguments @splat -Parameters $PSBoundParameters
+        $splat = $null
 
-    Write-Verbose "Using output directory '$outdir'"
+        $private:outdir = $config.OutputDir.Path
+        Write-Verbose "Using output directory '$outdir'"
 
-    $cmd = $cmdline -join ' '
-    if ($PSCmdlet.ShouldProcess('vcpkg install')) {
-        Write-Verbose "Executing '$cmd'"
-    }
-    else {
-        Write-Host "Whatif: Would execute '$cmd'"
-        $cmd += " --dry-run"
-    }
+        # Return BaseDir (normalized) and Tag with $config:
+        $config += @{ BaseDir = $tagged.BaseDir }
+        $config += @{ Tag = $tagged.Tag }
 
-    if ($Quiet) {
-        & $cmd 2>&1 | Out-Null
-    }
-    else {
-        & $cmd
-    }
+        $private:exe = $config.Command
+        $private:verb = 'install'
 
-    return $outdir, $tag
+        $private:params = @()
+        $params += $verb
+
+        # Force classic mode if ports are specified, manifest mode if all ports are selected:
+        if ($PSBoundParameters.ContainsKey("Ports")) {
+            $params += $Ports
+            $params += "--classic"
+        }
+        elseif ($PSBoundParameters.ContainsKey("All")) {
+            $params += "--feature-flags=`"manifest,versions`""
+        }
+
+        $params += $config.Arguments
+        $params += "--no-print-usage"
+
+        if ($PSCmdlet.ShouldProcess($outdir, 'vcpkg install')) {
+            Write-Verbose "Executing '$exe $params'"
+        }
+        else {
+            Write-Host "Whatif: Would execute '$exe $params'"
+            $params += "--dry-run"
+        }
+
+        if ($Quiet) {
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false 2>&1 | Out-Null
+        }
+        else {
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false
+        }
+
+        # Try to clean up after --dry-run:
+        if ($WhatIfPreference) {
+            # Only cleanup the root output directory if it was created by --dry-run:
+            $private:todo = $null
+
+            # Try to clean up created output subdirectories:
+            $todo += @( 'BaseDir', 'OutputDir', 'DownloadDir', 'BuildDir', 'PackageDir', 'InstallDir' )
+
+            $private:ignore = $config.RootDir
+            $todo | ForEach-Object {
+                if (-not $config.ContainsKey($_)) {
+                    Write-Warning "Missing expected key '$_' in `$config; ignoring"
+                }
+                else {
+                    $private:dir = $config[$_]
+                    if ($null -ne $dir) {
+                        $private:clean = $dir.Path
+                        if (-not $dir.Exists) {
+                            # Only clean up if the path was created:
+                            if (Test-Path -Path $clean -PathType Container) {
+                                # Just in case:
+                                if ($clean -ne $ignore) {
+                                    Write-Verbose "Cleaning up output directory '$clean' for dry run"
+                                    Remove-Item -Path $clean -Recurse -Force -WhatIf:$false
+                                }
+                            }
+                        }
+                        else {
+                            Write-Verbose "Not removing existing directory '$clean'"
+                        }
+                    }
+                }
+            }
+        }
+
+        return $config
+    }
 }
