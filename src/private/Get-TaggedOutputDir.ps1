@@ -39,6 +39,7 @@ function Get-TaggedOutputDir {
 
     [CmdletBinding()]
     param (
+        [AllowEmptyString()]
         [string]$OutputDir,
 
         [AllowEmptyString()]
@@ -49,7 +50,9 @@ function Get-TaggedOutputDir {
     )
 
     begin {
-        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        if (-not $PSBoundParameters.ContainsKey('ErrorAction')) {
+            $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        }
     }
 
     process {
@@ -57,8 +60,10 @@ function Get-TaggedOutputDir {
         $private:outdir = $null
         $private:basedir = $null
         if ($PSBoundParameters.ContainsKey("OutputDir")) {
-            $outdir = $OutputDir
-            $basedir = $outdir
+            if (-not [string]::IsNullOrWhiteSpace($OutputDir)) {
+                $outdir = $OutputDir
+                $basedir = $outdir
+            }
         }
 
         $private:outtag = $null

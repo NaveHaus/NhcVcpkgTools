@@ -30,12 +30,12 @@ function Get-CommonArguments {
     - Command (specify the vcpkg executable)
     - RootDir (--vcpkg-root)
     - Triplet (--triplet)
+    - OverlayPorts (--overlay-ports)
+    - ManifestDir (--x-manifest-root)
     - DownloadDir (--downloads-root). Defaults to '<vcpkg-root>/downloads'
     - BuildDir (--x-buildtrees-root). Defaults to '<vcpkg-root>/buildtrees'
     - PackageDir (--x-packages-root). Defaults to '<vcpkg-root>/packages'
     - InstallDir (--x-install-root). Defaults to '<vcpkg-root>/installed'
-    - ManifestDir (--x-manifest-root)
-    - OverlayPorts (--overlay-ports)
 
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
@@ -49,10 +49,13 @@ function Get-CommonArguments {
     - Arguments: An array of strings that can be used to invoke vcpkg using Start-Process.
     - RootDir: The vcpkg root directory.
     - OutputDir = @{ Path, Exists }: The output directory and whether or not it exists. Path will be the same as OutputDir if passed, or the vcpkg root directory otherwise.
-    - DownloadDir = @{ Path, Exists }: The string passed to --downloads-root and whether or not it exists.
-    - BuildDir = @{ Path, Exists }: The string passed to --x-buildtrees-root and whether or not it exists.
-    - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root and whether or not it exists..
-    - InstallDir = @{ Path, Exists }: The string passed to --x-install-root and whether or not it exists.
+    - DownloadDir = @{ Path, Exists }: The string passed to --downloads-root.
+    - BuildDir = @{ Path, Exists }: The string passed to --x-buildtrees-root.
+    - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root.
+    - InstallDir = @{ Path, Exists }: The string passed to --x-install-root.
+
+    The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked.
+
 
     .LINK
     https://learn.microsoft.com/en-us/vcpkg/commands/common-options
@@ -66,7 +69,9 @@ function Get-CommonArguments {
     )
 
     begin {
-        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        if (-not $PSBoundParameters.ContainsKey('ErrorAction')) {
+            $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        }
     }
 
     process {
@@ -187,7 +192,7 @@ function Get-CommonArguments {
         # Setup default paths:
         if ($Parameters.ContainsKey("DownloadDir")) {
             # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:DownloadDir = ConverTo-NormalizedPath($Parameters.DownloadDir)
+            $private:DownloadDir = ConvertTo-NormalizedPath($Parameters.DownloadDir)
         }
         else {
             $private:DownloadDir = Join-RelativePath -Path $outdir -ChildPath 'downloads'
@@ -196,7 +201,7 @@ function Get-CommonArguments {
 
         if ($Parameters.ContainsKey("BuildDir")) {
             # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:BuildDir = ConverTo-NormalizedPath($Parameters.BuildDir)
+            $private:BuildDir = ConvertTo-NormalizedPath($Parameters.BuildDir)
         }
         else {
             $BuildDir = Join-RelativePath -Path $outdir -ChildPath 'buildtrees'
@@ -205,7 +210,7 @@ function Get-CommonArguments {
 
         if ($Parameters.ContainsKey("PackageDir")) {
             # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:PackageDir = ConverTo-NormalizedPath($Parameters.PackageDir)
+            $private:PackageDir = ConvertTo-NormalizedPath($Parameters.PackageDir)
         }
         else {
             $PackageDir = Join-RelativePath -Path $outdir -ChildPath 'packages'
@@ -214,7 +219,7 @@ function Get-CommonArguments {
 
         if ($Parameters.ContainsKey("InstallDir")) {
             # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:InstallDir = ConverTo-NormalizedPath($Parameters.InstallDir)
+            $private:InstallDir = ConvertTo-NormalizedPath($Parameters.InstallDir)
         }
         else {
             $InstallDir = Join-RelativePath -Path $outdir -ChildPath 'installed'
