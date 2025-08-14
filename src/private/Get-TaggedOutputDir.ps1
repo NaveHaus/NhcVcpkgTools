@@ -1,5 +1,10 @@
 Set-StrictMode -Version 3.0
 
+. $PSScriptRoot\ConvertTo-NormalizedPath.ps1
+. $PSScriptRoot\Get-PathInfo.ps1
+. $PSScriptRoot\Join-RelativePath.ps1
+. $PSScriptRoot\Test-PathString.ps1
+
 function Get-TaggedOutputDir {
     <#
     .SYNOPSIS
@@ -9,68 +14,120 @@ function Get-TaggedOutputDir {
     This function creates a standardized path for vcpkg commands that generate output. At least one of OutputDir or Tag must be passed, otherwise an error is raised. By default, an error is generated if the output directory resolves to the current working directory, as this is undesirable in mnay cases. Pass AllowCwd to allow the function to return Get-Location.
 
     .PARAMETER OutputDir
-    The base output directory. 
+    The base output directory.
 
     .PARAMETER Tag
-    Add a named subdirectory under OutputDir. If a string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+    Add a named subdirectory under OutputDir. If a non-empty string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+
+    .PARAMETER Normalize
+    If passed, the returned paths are normalized by calling CovnertTo-NormalizedPath.
 
     .PARAMETER AllowCwd
     If passed, the output of Get-Location is allowed for OutputDir.
 
     .OUTPUTS
-    Strings holding the generated OutputDir and Tag.
+    Returns a hashtable with fields:
+    - BaseDir = @{ Path, Exists }: OutputDir without the Tag if OutputDir was passed.
+    - OutputDir = @{ Path, Exists }: The computed output directory, including Tag if it was passed or generated.
+    - Tag: The tag if one was passed or generated.
+
+    The "Exists" hashtable field indicates whether or not the corresponding directory existed before this function was invoked.
+
+    .NOTES
+    If an output directory was not generated, then OutputDir, BaseDir and Tag will be $null.
     #>
 
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
         [string]$OutputDir,
 
         [AllowEmptyString()]
         [string]$Tag,
 
+        [switch]$Normalize,
         [switch]$AllowCwd
     )
 
-    $private:outdir = $null
-    if ($PSBoundParameters.ContainsKey("OutputDir")) {
-        $outdir = $PSBoundParameters.OutputDir
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    $private:tag = $null
-    if ($PSBoundParameters.ContainsKey("Tag")) {
-        $tag = $PSBoundParameters.Tag
-        if ([string]::IsNullOrWhiteSpace($tag)) {
-            $private:tag = Get-Date -Format "yyMMdd-hhmmss"
+    process {
+
+        $private:outdir = $null
+        $private:basedir = $null
+        if ($PSBoundParameters.ContainsKey("OutputDir")) {
+            $outdir = $OutputDir
+            $basedir = $outdir
         }
 
-        # Validate the tag (note that checking a generated timestamp is intentional):
-        if ($private:tag.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ne -1) {
-            throw "The tag '$tag' contains invalid characters."
-        }
-    }
+        $private:outtag = $null
+        if ($PSBoundParameters.ContainsKey("Tag")) {
+            $outtag = $Tag
+            if ([string]::IsNullOrWhiteSpace($outtag)) {
+                $outtag = Get-Date -Format "yyMMdd-hhmmss"
+            }
 
-    # Combine $outdir and $tag if both are defined:
-    if (-not [string]::IsNullOrWhiteSpace($tag)) {
-        if ($null -eq $outdir) {
-            $outdir = $tag
+            # Validate the tag (note that checking a generated timestamp is intentional):
+            if (-not (Test-FileNameString -FileName $outtag)) {
+                Write-Error "The tag '$outtag' contains invalid characters."
+            }
+        }
+
+        $result = @{
+            BaseDir   = $null
+            OutputDir = $null
+            Tag       = $null
+        }
+
+        # Stop if no output directory can be computed:
+        if (($null -eq $outdir) -and ($null -eq $outtag)) {
+            return $result
+        }
+        elseif ($null -eq $outdir) {
+            $outdir = $outtag
+        }
+        elseif ($null -ne $outtag) {
+            $outdir = Join-RelativePath -Path $outdir -ChildPath $outtag
+        }
+
+        # Disallow the current working directory by default:
+        if (-not $AllowCwd) {
+            $private:cwd = Join-RelativePath -Path (Get-Location) -ChildPath . -Resolve
+            $private:resolved = Join-RelativePath -Path $outdir -ChildPath . -Resolve -ErrorAction Ignore
+            if ("$resolved" -eq "$cwd") {
+                Write-Error "Cannot output to the current working directory."
+            }
+        }
+
+        # Check for existing directories:
+        $private:info = Get-PathInfo -Path $basedir
+        if ($info.Exists -and -not $info.PSIsContainer) {
+            Write-Error "Existing path '$basedir' is not a directory"
         }
         else {
-            $outdir = Join-Path -Path $outdir -ChildPath $tag
+            if ($Normalize) {
+                $basedir = ConvertTo-NormalizedPath -Path $basedir
+            }
+            $result.BaseDir = @{ Path = $basedir; Exists = $info.Exists }
         }
-    }
 
-    if ($null -eq $outdir) {
-        throw "At least one of OutputDir or Tag is required."
-    }
-
-    # Disallow the current working directory by default:
-    if (-not $PSBoundParameters.AllowCwd) {
-        $private:cwd = Get-Location
-        $private:resolved = Resolve-Path -Path $OutputDir -Force -ErrorAction Ignore
-        if ("$resolved" -eq "$cwd") {
-            throw "Cannot output to the current working directory."
+        # Check for existing directories:
+        $private:info = Get-PathInfo -Path $outdir
+        if ($info.Exists -and -not $info.PSIsContainer) {
+            Write-Error "Existing path '$outdir' is not a directory"
         }
-    }
+        else {
+            if ($Normalize) {
+                $outdir = ConvertTo-NormalizedPath -Path $outdir
+            }
+            $result.OutputDir = @{ Path = $outdir; Exists = $info.Exists }
+        }
 
-    return $outdir, $tag
+        if ($null -ne $outtag) {
+            $result.Tag = $outtag
+        }
+
+        return $result
+    }
 }

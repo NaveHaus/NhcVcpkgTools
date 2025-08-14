@@ -1,5 +1,9 @@
 Set-StrictMode -Version 3.0
 
+. $PSScriptRoot\Test-AbsolutePath.ps1
+. $PSScriptRoot\Test-PathString.ps1
+. $PSScriptRoot\Test-FileNameString.ps1
+
 function Join-RelativePath {
     <#
     .SYNOPSIS
@@ -14,6 +18,8 @@ function Join-RelativePath {
     .PARAMETER Resolve
     If passed, the combined path must exist or an error is raised.
     #>
+
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string]$Path,
@@ -24,17 +30,23 @@ function Join-RelativePath {
         [switch]$Resolve
     )
 
-    if (-not (Test-PathString -Path $Path)) {
-        throw "Base path '$Path' is invalid."
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    if (-not (Test-PathString -Path $ChildPath)) {
-        throw "Child path '$ChildPath' is invalid."
-    }
+    process {
+        if (-not (Test-PathString -Path $Path)) {
+            Write-Error "Base path '$Path' is invalid."
+        }
 
-    if (Test-AbsolutePath -Path $ChildPath) {
-        throw "Cannot make absolute path '$ChildPath' relative to '$Path'."
-    }
+        if (-not (Test-PathString -Path $ChildPath)) {
+            Write-Error "Child path '$ChildPath' is invalid."
+        }
 
-    return Join-Path -Path $Path -ChildPath $ChildPath -Resolve:$Resolve
+        if (Test-AbsolutePath -Path $ChildPath) {
+            Write-Error "Cannot make absolute path '$ChildPath' relative to '$Path'."
+        }
+
+        return Join-Path -Path $Path -ChildPath $ChildPath -Resolve:$Resolve
+    }
 }
