@@ -1,5 +1,12 @@
 Set-StrictMode -Version 3.0
 
+. $PSScriptRoot\ConvertTo-NormalizedPath.ps1
+. $PSScriptRoot\Get-Executable.ps1
+. $PSScriptRoot\Get-DefaultTriplet.ps1
+. $PSScriptRoot\Join-RelativePath.ps1
+. $PSScriptRoot\Test-Executable.ps1
+. $PSScriptRoot\Test-VcpkgRoot.ps1
+
 function Get-CommonArguments {
     <#
     .SYNOPSIS
@@ -30,13 +37,6 @@ function Get-CommonArguments {
     - ManifestDir (--x-manifest-root)
     - OverlayPorts (--overlay-ports)
 
-    .PARAMETER Verb
-    The required vcpkg verb (command) to be called.
-
-    Currently recognized verbs:
-    - install
-    - export
-
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
 
@@ -44,153 +44,193 @@ function Get-CommonArguments {
     An optional parent directory to use for DownloadDir, BuildDir, PackageDir, and InstallDir insted of <vcpkg-root>.
 
     .OUTPUTS
-    - An array of strings that can be used to invoke vcpkg with common arguments.
-    - The detected vcpkg root directory.
+    Returns a hashtable with fields:
+    - Command: the full vcpkg executable path
+    - Arguments: An array of strings that can be used to invoke vcpkg using Start-Process.
+    - RootDir: The vcpkg root directory.
+    - OutputDir = @{ Path, Exists }: The output directory and whether or not it exists. Path will be the same as OutputDir if passed, or the vcpkg root directory otherwise.
+    - DownloadDir = @{ Path, Exists }: The string passed to --downloads-root and whether or not it exists.
+    - BuildDir = @{ Path, Exists }: The string passed to --x-buildtrees-root and whether or not it exists.
+    - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root and whether or not it exists..
+    - InstallDir = @{ Path, Exists }: The string passed to --x-install-root and whether or not it exists.
 
     .LINK
     https://learn.microsoft.com/en-us/vcpkg/commands/common-options
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = "Parameters", PositionalBinding = $false)]
     param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [ValidateSet("install", "export")]
-        [hashtable]$Verb,
-
-        [Parameter(Mandatory = $true, Position = 1)]
-        [hashtable]$Parameters
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Parameters,
+        [string]$OutputDir
     )
 
-    # Find the vcpkg executable and root directory:
-
-    # Try a user-specified root first:
-    $private:root = $null
-    if ($Parameters.ContainsKey("RootDir")) {
-        $private:dir = $Parameters.RootDir
-        if (-not (Test-VcpkgRoot -Path $dir)) {
-            throw "The path '$dir' is not a valid vcpkg root directory."
-        }
-        $root = Resolve-Path -Path $dir -Force
+    begin {
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     }
 
-    # Try a user-specified vcpkg command first:
-    $private:exe = $null
-    if ($Parameters.ContainsKey("Command")) {
-        $private:file = $Parameters.Command
-        if (-not (Test-Executable -Path $file)) {
-            throw "The path '$file' is not a valid vcpkg executable."
-        }
-        $exe = Resolve-Path -Path $file -Force
-    }
+    process {
+        # Find the vcpkg executable and root directory:
 
-    # If $root is undefined but $exe is defined, try to set $root from the parent directory of $exe:
-    if (($null -eq $root) -and -not ($null -eq $exe)) {
-        $private:dir = [System.IO.Path]::GetDirectoryName($exe)
-        if (Test-VcpkgRoot -Path $dir) {
+        # Try a user-specified root first:
+        $private:root = $null
+        if ($Parameters.ContainsKey("RootDir")) {
+            $private:dir = $Parameters.RootDir
+            if (-not (Test-VcpkgRoot -Path $dir)) {
+                Write-Error "The path '$dir' is not a valid vcpkg root directory."
+            }
             $root = $dir
         }
-    }
 
-    # If $exe is undefined but $root is defined, try to set $exe from $root:
-    if (($null -eq $exe) -and -not ($null -eq $root)) {
-        $exe = Get-Executable -Path $root -Name 'vcpkg'
-    }
+        # Try a user-specified vcpkg command first:
+        $private:exe = $null
+        if ($Parameters.ContainsKey("Command")) {
+            $private:file = $Parameters.Command
+            if (-not (Test-Executable -Path $file)) {
+                Write-Error "The path '$file' is not a valid vcpkg executable."
+            }
+            $exe = Resolve-Path -Path $file -Force
+        }
 
-    # If both $root and $exe are still undefined, try to set them from $env:VCPKG_ROOT:
-    if (($null -eq $root) -and ($null -eq $exe)) {
-        $private:dir = $env:VCPKG_ROOT
-        if (-not [System.String]::IsNullOrEmpty($dir)) {
+        # If $root is undefined but $exe is defined, try to set $root from the parent directory of $exe:
+        if (($null -eq $root) -and -not ($null -eq $exe)) {
+            $private:dir = [System.IO.Path]::GetDirectoryName($exe)
             if (Test-VcpkgRoot -Path $dir) {
                 $root = $dir
-                $exe = Get-Executable -Path $root -Name 'vcpkg'
             }
         }
-    }
 
-    # No joy.
-    if (($null -eq $root) -or ($null -eq $exe)) {
-        throw "Could not find the vcpkg executable and root directory."
-    }
-    if ($null -eq $root) {
-        throw "Could not find the vcpkg the root directory."
-    }
-    if ($null -eq $exe) {
-        throw "Could not find the vcpkg executable."
-    }
-
-
-    $private:params = @()
-
-    # Start building up the command line:
-    params += $exe
-    params += $Verb
-    params += "--vcpkg-root=$root"
-
-    $private:triplet = Get-DefaultTriplet -Parameters $Parameters
-    $params += "--triplet=$triplet"
-    Write-Verbose "Using target triplet '$triplet'"
-
-    if ($Parameters.ContainsKey("ManifestDir")) {
-        $ManifestDir = $Parameters.ManifestDir
-        $manifest = Join-Path -Path $ManifestDir -ChildPath 'vcpkg.json' -Resolve -ErrorAction Ignore
-        if ($null = $manifest) {
-            throw "The specified manifest directory '$ManifestDir' does not exist, is not a directory, or does not contain vcpkg.json."
+        # If $exe is undefined but $root is defined, try to set $exe from $root:
+        if (($null -eq $exe) -and -not ($null -eq $root)) {
+            $exe = Get-Executable -Path $root -Name 'vcpkg'
         }
-        $params += "--x-manifest-root=$ManifestDir"
-        Write-Verbose "Using vcpkg.json from '$ManifestDir'"
-    }
 
-    if ($Parameters.ContainsKey("OverlayPorts")) {
-        $Parameters.OverlayPorts | ForEach-Object {
-            $path = Resolve-Path -Path $_ -Force -ErrorAction Ignore
-            if ($null -eq $path) {
-                throw "The overlay port directory '$_' does not exist or is not a directory."
+        # If both $root and $exe are still undefined, try to set them from $env:VCPKG_ROOT:
+        if (($null -eq $root) -and ($null -eq $exe)) {
+            $private:dir = $env:VCPKG_ROOT
+            if (-not [System.String]::IsNullOrEmpty($dir)) {
+                if (Test-VcpkgRoot -Path $dir) {
+                    $root = $dir
+                    $exe = Get-Executable -Path $root -Name 'vcpkg'
+                }
             }
-            $params += "--overlay-ports=$path"
-            Write-Verbose "Using overlay ports from '$path'"
+        }
+
+        # No joy.
+        if (($null -eq $root) -or ($null -eq $exe)) {
+            Write-Error "Could not find the vcpkg executable and root directory."
+        }
+        if ($null -eq $root) {
+            Write-Error "Could not find the vcpkg the root directory."
+        }
+        if ($null -eq $exe) {
+            Write-Error "Could not find the vcpkg executable."
+        }
+
+        # vcpkg doesn't like trailing '\' on Windows, so resolve the path with Join-RelativePath:
+        $root = Join-RelativePath -Path $root -ChildPath . -Resolve
+
+        $private:params = @()
+
+        # Start building up the command line:
+        $params += "--vcpkg-root=`"$root`""
+
+        $private:triplet = Get-DefaultTriplet -Parameters $Parameters
+        $params += "--triplet=`"$triplet`""
+        $params += "--host-triplet=`"$triplet`""
+        Write-Verbose "Using host and target triplet '$triplet'"
+
+        if ($Parameters.ContainsKey("ManifestDir")) {
+            # vcpkg doesn't like trailing '\' on Windows, so use Join-RelativePath to remove them:
+            $private:dir = Join-RelativePath -Path $Parameters.ManifestDir -ChildPath . -Resolve -ErrorAction Ignore
+            if ($null -eq $dir) {
+                Write-Error "The specified manifest directory '$ManifestDir' does not exist, is not a directory, or is inaccessible."
+            }
+
+            $manifest = Join-RelativePath -Path $dir -ChildPath 'vcpkg.json' -Resolve -ErrorAction Ignore
+            if ($null -eq $manifest) {
+                Write-Error "The specified manifest directory '$ManifestDir' does not exist, is not a directory, or does not contain vcpkg.json."
+            }
+            $params += "--x-manifest-root=`"$dir`""
+            Write-Verbose "Using vcpkg.json from '$dir'"
+        }
+
+        if ($Parameters.ContainsKey("OverlayPorts")) {
+            $Parameters.OverlayPorts | ForEach-Object {
+                # vcpkg doesn't like trailing '\' on Windows, and Resolve-Path leaves them, so use
+                # Join-RelativePath to remove them:
+                $private:dir = Join-RelativePath -Path $_ -ChildPath . -Resolve -ErrorAction Ignore
+                if ($null -eq $dir) {
+                    Write-Error "The overlay port directory '$_' does not exist or is not a directory."
+                }
+                $params += "--overlay-ports=`"$dir`""
+                Write-Verbose "Using overlay ports from '$dir'"
+            }
+        }
+
+        # Setup the default parent for outputs:
+        if ($PSBoundParameters.ContainsKey("OutputDir")) {
+            $private:outdir = $OutputDir;
+        }
+        else {
+            $private:outdir = $root
+        }
+
+        # vcpkg doesn't like trailing '\' on Windows, so remove them:
+        $outdir = ConvertTo-NormalizedPath($outdir)
+
+        # Just in case:
+        if((Test-VcpkgRoot -Path $outdir) -and ($outdir -ne $root)) {
+            Write-Warning "Output directory '$outdir' appears to be a vcpkg root directory, but is different from '$root'"
+        }
+
+        # Setup default paths:
+        if ($Parameters.ContainsKey("DownloadDir")) {
+            # vcpkg doesn't like trailing '\' on Windows, so remove them:
+            $private:DownloadDir = ConverTo-NormalizedPath($Parameters.DownloadDir)
+        }
+        else {
+            $private:DownloadDir = Join-RelativePath -Path $outdir -ChildPath 'downloads'
+        }
+        $params += "--downloads-root=`"$DownloadDir`""
+
+        if ($Parameters.ContainsKey("BuildDir")) {
+            # vcpkg doesn't like trailing '\' on Windows, so remove them:
+            $private:BuildDir = ConverTo-NormalizedPath($Parameters.BuildDir)
+        }
+        else {
+            $BuildDir = Join-RelativePath -Path $outdir -ChildPath 'buildtrees'
+        }
+        $params += "--x-buildtrees-root=`"$BuildDir`""
+
+        if ($Parameters.ContainsKey("PackageDir")) {
+            # vcpkg doesn't like trailing '\' on Windows, so remove them:
+            $private:PackageDir = ConverTo-NormalizedPath($Parameters.PackageDir)
+        }
+        else {
+            $PackageDir = Join-RelativePath -Path $outdir -ChildPath 'packages'
+        }
+        $params += "--x-packages-root=`"$PackageDir`""
+
+        if ($Parameters.ContainsKey("InstallDir")) {
+            # vcpkg doesn't like trailing '\' on Windows, so remove them:
+            $private:InstallDir = ConverTo-NormalizedPath($Parameters.InstallDir)
+        }
+        else {
+            $InstallDir = Join-RelativePath -Path $outdir -ChildPath 'installed'
+        }
+        $params += "--x-install-root=`"$InstallDir`""
+
+        # Build up the hashtable return value:
+        return @{
+            Command     = $exe
+            Arguments   = $params
+            RootDir     = $root
+            OutputDir   = @{ Path = $outdir; Exists = (Test-Path -Path $outdir -PathType Container) }
+            DownloadDir = @{ Path = $DownloadDir; Exists = (Test-Path -Path $DownloadDir -PathType Container) }
+            BuildDir    = @{ Path = $BuildDir; Exists = (Test-Path -Path $BuildDir -PathType Container) }
+            PackageDir  = @{ Path = $PackageDir; Exists = (Test-Path -Path $PackageDir -PathType Container) } 
+            InstallDir  = @{ Path = $InstallDir; Exists = (Test-Path -Path $InstallDir -PathType Container) } 
         }
     }
-
-    # Setup the default parent for outputs:
-    if ($PSBoundParameters.ContainsKey("OutputDir")) {
-        $private:outdir = $PSBoundParameters.OutputDir;
-    }
-    else {
-        $private:outdir = $root
-    }
-
-    # Setup default paths:
-    if ($Parameters.ContainsKey("DownloadDir")) {
-        $DownloadDir = $Parameters.DownloadDir
-    }
-    else {
-        $DownloadDir = Join-RelativePath -Path $outdir -ChildPath 'downloads'
-    }
-    $params += "--downloads-root=$DownloadDir"
-
-    if ($Parameters.ContainsKey("BuildDir")) {
-        $BuildDir = $Parameters.BuildDir
-    }
-    else {
-        $BuildDir = Join-RelativePath -Path $outdir -ChildPath 'buildtrees'
-    }
-    $params += "--x-buildtrees-root=$BuildDir"
-
-    if ($Parameters.ContainsKey("PackageDir")) {
-        $PackageDir = $Parameters.PackageDir
-    }
-    else {
-        $PackageDir = Join-RelativePath -Path $outdir -ChildPath 'packages'
-    }
-    $params += "--x-packages-root=$PackageDir"
-
-    if ($Parameters.ContainsKey("InstallDir")) {
-        $InstallDir = $Parameters.InstallDir
-    }
-    else {
-        $InstallDir = Join-RelativePath -Path $outdir -ChildPath 'installed'
-    }
-    $params += "--x-install-root=$InstallDir"
-
-    return $params, $root
 }
