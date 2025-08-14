@@ -32,11 +32,17 @@ function Install-NhcVcpkgPorts {
     .PARAMETER Command
     Specifies the path to the vcpkg executable to call.
 
+    .PARAMETER RootDir
+    Specifies the vcpkg root path to use.
+
     .PARAMETER Triplet
     Specifies the target triplet (e.g., x64-windows). Auto-detected if not provided.
 
-    .PARAMETER RootDir
-    Specifies the vcpkg root path to use.
+    .PARAMETER OverlayPorts
+    Specifies one or more paths to overlay ports.
+
+    .PARAMETER ManifestDir
+    Specifies the directory containing 'vcpkg.json'. Only used if All is passed.
 
     .PARAMETER DownloadDir
     Specifies a subdirectory of OutputDir[/Tag] in which to store downloaded files. If OutputDir is specified, DownloadDir must be relative. Defaults to './downloads'.
@@ -49,12 +55,6 @@ function Install-NhcVcpkgPorts {
 
     .PARAMETER InstallDir
     Specifies a subdirectory of OutputDir[/Tag] in which to install the selected ports. If OutputDir is specified, InstallDir must be relative. Defaults to './installed'.
-
-    .PARAMETER ManifestDir
-    Specifies the directory containing 'vcpkg.json'. Only used if All is passed.
-
-    .PARAMETER OverlayPorts
-    Specifies one or more paths to overlay ports.
 
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
@@ -103,55 +103,33 @@ function Install-NhcVcpkgPorts {
         [Parameter(ParameterSetName = "All", Mandatory = $true)]
         [switch]$All,
 
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
         [string]$OutputDir,
 
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
         [AllowEmptyString()]
         [string]$Tag,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [switch]$Quiet,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [string]$Command,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [string]$Triplet,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [string]$RootDir,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [string]$BuildDir,
-
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
-        [string]$InstallDir,
 
         [Parameter(ParameterSetName = "All")]
         [string]$ManifestDir,
 
-        [Parameter(ParameterSetName = "Ports")]
-        [Parameter(ParameterSetName = "All")]
+        [switch]$Quiet,
+        [string]$Command,
+        [string]$Triplet,
+        [string]$RootDir,
+        [string]$BuildDir,
+        [string]$InstallDir,
         [string[]]$OverlayPorts
     )
 
     begin {
-        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        if (-not $PSBoundParameters.ContainsKey('ErrorAction')) {
+            $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        }
     }
 
     process {
         $private:splat = $null
 
-        # Generate a custom OutputDir for installs if requested:
+        # Generate a custom OutputDir if requested:
         if ($PSBoundParameters.ContainsKey("OutputDir")) {
             $splat += @{ OutputDir = $OutputDir }
         }

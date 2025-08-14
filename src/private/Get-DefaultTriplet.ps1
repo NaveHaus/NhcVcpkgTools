@@ -29,7 +29,9 @@ function Get-DefaultTriplet {
     )
 
     begin {
-        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        if (-not $PSBoundParameters.ContainsKey('ErrorAction')) {
+            $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        }
     }
 
     process {
