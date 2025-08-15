@@ -28,10 +28,13 @@ function Get-CommonArguments {
 
     Currently recognized parameters:
     - Command (specify the vcpkg executable)
+    - Ports (enables --classic)
+    - All (enabled --feature-flags=manifest,versions)
     - RootDir (--vcpkg-root)
     - Triplet (--triplet)
     - OverlayPorts (--overlay-ports)
     - ManifestDir (--x-manifest-root)
+    - OutputDir (--output-dir). No default.
     - DownloadDir (--downloads-root). Defaults to '<vcpkg-root>/downloads'
     - BuildDir (--x-buildtrees-root). Defaults to '<vcpkg-root>/buildtrees'
     - PackageDir (--x-packages-root). Defaults to '<vcpkg-root>/packages'
@@ -40,22 +43,31 @@ function Get-CommonArguments {
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
 
-    .PARAMETER OutputDir
-    An optional parent directory to use for DownloadDir, BuildDir, PackageDir, and InstallDir insted of <vcpkg-root>.
+    .PARAMETER Directories
+    Specifies which directories should be added to the vcpkg command line. This parameter is case-sensitive. Must be one or more of:
+    - OutputDir
+    - DownloadDir
+    - BuildDir
+    - PackageDir
+    - InstallDir
+
+    The default list is 'DownloadDir', 'BuildDir', 'PackageDir', 'InstallDir'. 'OutputDir' must be specifically requested, and an error is raised if OutputDir is not passed in Parameters. Also note that OutputDir is not returned.
+
+    .PARAMETER ParentDir
+    An optional parent directory to use for DownloadDir, BuildDir, PackageDir, and InstallDir. The default is <vcpkg-root>. May be an empty string, in which case <vcpkg-root> is used as the output directory.
 
     .OUTPUTS
     Returns a hashtable with fields:
     - Command: the full vcpkg executable path
     - Arguments: An array of strings that can be used to invoke vcpkg using Start-Process.
     - RootDir: The vcpkg root directory.
-    - OutputDir = @{ Path, Exists }: The output directory and whether or not it exists. Path will be the same as OutputDir if passed, or the vcpkg root directory otherwise.
+    - ParentDir = @{ Path, Exists }: The parent directory and whether or not it exists. Path will be the normalized ParentDir if passed, or the normalized vcpkg root directory otherwise.
     - DownloadDir = @{ Path, Exists }: The string passed to --downloads-root.
     - BuildDir = @{ Path, Exists }: The string passed to --x-buildtrees-root.
     - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root.
     - InstallDir = @{ Path, Exists }: The string passed to --x-install-root.
 
-    The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked.
-
+    The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked. If Directories is passed, only the specified directories are returned.
 
     .LINK
     https://learn.microsoft.com/en-us/vcpkg/commands/common-options
@@ -63,9 +75,15 @@ function Get-CommonArguments {
 
     [CmdletBinding(DefaultParameterSetName = "Parameters", PositionalBinding = $false)]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [hashtable]$Parameters,
-        [string]$OutputDir
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("OutputDir", "DownloadDir", "BuildDir", "PackageDir", "InstallDir", IgnoreCase = $false)]
+        [string[]]$Directories = @( "DownloadDir", "BuildDir", "PackageDir", "InstallDir" ),
+
+        [AllowEmptyString()]
+        [string]$ParentDir
     )
 
     begin {
@@ -138,6 +156,16 @@ function Get-CommonArguments {
         $private:params = @()
 
         # Start building up the command line:
+
+        # Force classic mode if ports are specified, manifest mode if all ports are selected:
+        if ($Parameters.ContainsKey("Ports")) {
+            $params += $Ports
+            $params += "--classic"
+        }
+        elseif ($Parameters.ContainsKey("All")) {
+            $params += "--feature-flags=`"manifest,versions`""
+        }
+
         $params += "--vcpkg-root=`"$root`""
 
         $private:triplet = Get-DefaultTriplet -Parameters $Parameters
@@ -174,68 +202,111 @@ function Get-CommonArguments {
         }
 
         # Setup the default parent for outputs:
-        if ($PSBoundParameters.ContainsKey("OutputDir")) {
-            $private:outdir = $OutputDir;
-        }
-        else {
-            $private:outdir = $root
+        $private:parent = $root
+        if ($PSBoundParameters.ContainsKey("ParentDir")) {
+            if (-not [System.String]::IsNullOrEmpty($ParentDir)) {
+                $private:parent = $ParentDir;
+            }
         }
 
         # vcpkg doesn't like trailing '\' on Windows, so remove them:
-        $outdir = ConvertTo-NormalizedPath($outdir)
+        $parent = ConvertTo-NormalizedPath($parent)
 
         # Just in case:
-        if((Test-VcpkgRoot -Path $outdir) -and ($outdir -ne $root)) {
-            Write-Warning "Output directory '$outdir' appears to be a vcpkg root directory, but is different from '$root'"
+        if ((Test-VcpkgRoot -Path $parent) -and ($parent -ne $root)) {
+            Write-Warning "Parent directory '$parent' appears to be a vcpkg root directory, but is different from '$root'"
         }
 
-        # Setup default paths:
-        if ($Parameters.ContainsKey("DownloadDir")) {
-            # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:DownloadDir = ConvertTo-NormalizedPath($Parameters.DownloadDir)
+        $result = @{
+            Command   = $exe
+            RootDir   = $root
+            ParentDir = @{ Path = $parent; Exists = (Test-Path -Path $parent -PathType Container) }
         }
-        else {
-            $private:DownloadDir = Join-RelativePath -Path $outdir -ChildPath 'downloads'
-        }
-        $params += "--downloads-root=`"$DownloadDir`""
 
-        if ($Parameters.ContainsKey("BuildDir")) {
-            # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:BuildDir = ConvertTo-NormalizedPath($Parameters.BuildDir)
+        # Setup default output paths:
+        if ($Directories.Contains("DownloadDir")) {
+            if ($Parameters.ContainsKey("DownloadDir")) {
+                # vcpkg doesn't like trailing '\' on Windows, so remove them:
+                $private:DownloadDir = ConvertTo-NormalizedPath($Parameters.DownloadDir)
+            }
+            else {
+                $private:DownloadDir = Join-RelativePath -Path $parent -ChildPath 'downloads'
+            }
+            $params += "--downloads-root=`"$DownloadDir`""
+            $result += @{
+                DownloadDir = @{
+                    Path   = $DownloadDir
+                    Exists = (Test-Path -Path $DownloadDir -PathType Container)
+                }
+            }
         }
-        else {
-            $BuildDir = Join-RelativePath -Path $outdir -ChildPath 'buildtrees'
-        }
-        $params += "--x-buildtrees-root=`"$BuildDir`""
 
-        if ($Parameters.ContainsKey("PackageDir")) {
-            # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:PackageDir = ConvertTo-NormalizedPath($Parameters.PackageDir)
+        if ($Directories.Contains("BuildDir")) {
+            if ($Parameters.ContainsKey("BuildDir")) {
+                # vcpkg doesn't like trailing '\' on Windows, so remove them:
+                $private:BuildDir = ConvertTo-NormalizedPath($Parameters.BuildDir)
+            }
+            else {
+                $BuildDir = Join-RelativePath -Path $parent -ChildPath 'buildtrees'
+            }
+            $params += "--x-buildtrees-root=`"$BuildDir`""
+            $result += @{
+                BuildDir = @{
+                    Path   = $BuildDir
+                    Exists = (Test-Path -Path $BuildDir -PathType Container) 
+                }
+            }
         }
-        else {
-            $PackageDir = Join-RelativePath -Path $outdir -ChildPath 'packages'
-        }
-        $params += "--x-packages-root=`"$PackageDir`""
 
-        if ($Parameters.ContainsKey("InstallDir")) {
-            # vcpkg doesn't like trailing '\' on Windows, so remove them:
-            $private:InstallDir = ConvertTo-NormalizedPath($Parameters.InstallDir)
+        if ($Directories.Contains("PackageDir")) {
+            if ($Parameters.ContainsKey("PackageDir")) {
+                # vcpkg doesn't like trailing '\' on Windows, so remove them:
+                $private:PackageDir = ConvertTo-NormalizedPath($Parameters.PackageDir)
+            }
+            else {
+                $PackageDir = Join-RelativePath -Path $parent -ChildPath 'packages'
+            }
+            $params += "--x-packages-root=`"$PackageDir`""
+            $result += @{
+                PackageDir = @{
+                    Path   = $PackageDir
+                    Exists = (Test-Path -Path $PackageDir -PathType Container) 
+                } 
+            }
         }
-        else {
-            $InstallDir = Join-RelativePath -Path $outdir -ChildPath 'installed'
-        }
-        $params += "--x-install-root=`"$InstallDir`""
 
-        # Build up the hashtable return value:
-        return @{
-            Command     = $exe
-            Arguments   = $params
-            RootDir     = $root
-            OutputDir   = @{ Path = $outdir; Exists = (Test-Path -Path $outdir -PathType Container) }
-            DownloadDir = @{ Path = $DownloadDir; Exists = (Test-Path -Path $DownloadDir -PathType Container) }
-            BuildDir    = @{ Path = $BuildDir; Exists = (Test-Path -Path $BuildDir -PathType Container) }
-            PackageDir  = @{ Path = $PackageDir; Exists = (Test-Path -Path $PackageDir -PathType Container) } 
-            InstallDir  = @{ Path = $InstallDir; Exists = (Test-Path -Path $InstallDir -PathType Container) } 
+        if ($Directories.Contains("InstallDir")) {
+            if ($Parameters.ContainsKey("InstallDir")) {
+                # vcpkg doesn't like trailing '\' on Windows, so remove them:
+                $private:InstallDir = ConvertTo-NormalizedPath($Parameters.InstallDir)
+            }
+            else {
+                $InstallDir = Join-RelativePath -Path $parent -ChildPath 'installed'
+            }
+            $params += "--x-install-root=`"$InstallDir`""
+            $result += @{
+                InstallDir = @{
+                    Path   = $InstallDir
+                    Exists = (Test-Path -Path $InstallDir -PathType Container) 
+                } 
+            }
         }
+
+        # Include OutputDir if requested:
+        if ($Directories.Contains("OutputDir")) {
+            Write-Host "1"
+            $private:OutputDir = $null
+            if ($Parameters.ContainsKey("OutputDir")) {
+                $OutputDir = ConvertTo-NormalizedPath($Parameters.OutputDir)
+            }
+            if ($null -eq $OutputDir) {
+                Write-Error "OutputDir was not passed in Parameters or is null"
+            }
+            $params += "--output-dir=`"$OutputDir`""
+        }
+
+        # Done:
+        $result += @{ Arguments = $params }
+        return $result
     }
 }
