@@ -10,15 +10,15 @@ function Install-NhcVcpkgPorts {
     Build and install the requested vcpkg ports.
 
     .DESCRIPTION
-    This function wraps the `vcpkg install` command to provide additional functionality that is inconvenient or impossible to script using response files alone (e.g. versioned builds). By default, the path is used to find the vcpkg executable, but this behavior can be overridden by the Vcpkg parameter. Also, VCPKG_* environment variables are respected unless overridden by a corresponding parameter passed to the function.
+    This function wraps the 'vcpkg install' command to provide additional functionality that is inconvenient or impossible to script using response files alone (e.g. versioned builds). By default, the path is used to find the vcpkg executable, but this behavior can be overridden by the Vcpkg parameter. Also, VCPKG_* environment variables are respected unless overridden by a corresponding parameter passed to the function.
 
     Note: Requires vcpkg 2024-11-12 or newer for '--classic' support.
 
     .PARAMETER OutputDir
-    Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not specified.
+    Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not passed.
 
     .PARAMETER Tag
-    Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+    Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is passed, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
 
     .PARAMETER Quiet
     Suppresses all output from the vcpkg command, including errors.
@@ -33,7 +33,7 @@ function Install-NhcVcpkgPorts {
     Specifies the path to the vcpkg executable to call.
 
     .PARAMETER RootDir
-    Specifies the vcpkg root path to use.
+    Specifies the <vcpkg-root> to use. If not passed, <vcpkg-root> is detected from either the passed Command or $env:VCPKG_ROOT.
 
     .PARAMETER Triplet
     Specifies the target triplet (e.g., x64-windows). Auto-detected if not provided.
@@ -45,16 +45,16 @@ function Install-NhcVcpkgPorts {
     Specifies the directory containing 'vcpkg.json'. Only used if All is passed.
 
     .PARAMETER DownloadDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to store downloaded files. If OutputDir is specified, DownloadDir must be relative. Defaults to './downloads'.
+    Specifies a subdirectory of OutputDir[/Tag] in which to store downloaded files. If OutputDir or Tag is passed, DownloadDir must be relative. Defaults to './downloads'.
 
     .PARAMETER BuildDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to build the ports. If OutputDir is specified, BuildDir must be relative. Defaults to './buildtrees'.
+    Specifies a subdirectory of OutputDir[/Tag] in which to build the ports. If OutputDir or Tag is passed, BuildDir must be relative. Defaults to './buildtrees'.
 
     .PARAMETER PackageDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to store packaged ports. If OutputDir is specified, PackageDir must be relative. Defaults to './packages'.
+    Specifies a subdirectory of OutputDir[/Tag] in which to store packaged ports. If OutputDir or Tag is passed, PackageDir must be relative. Defaults to './packages'.
 
     .PARAMETER InstallDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to install the selected ports. If OutputDir is specified, InstallDir must be relative. Defaults to './installed'.
+    Specifies a subdirectory of OutputDir[/Tag] in which to install the selected ports. If OutputDir or Tag is passed, InstallDir must be relative. Defaults to './installed'.
 
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
@@ -115,7 +115,9 @@ function Install-NhcVcpkgPorts {
         [string]$Command,
         [string]$Triplet,
         [string]$RootDir,
+        [string]$DownloadDir,
         [string]$BuildDir,
+        [string]$PackageDir,
         [string]$InstallDir,
         [string[]]$OverlayPorts
     )
@@ -127,9 +129,14 @@ function Install-NhcVcpkgPorts {
     }
 
     process {
-        $private:splat = $null
+        # Directory arguments required by vcpkg install:
+        $private:required = @( 'DownloadDir', 'BuildDir', 'PackageDir', 'InstallDir' )
 
-        # Generate a custom OutputDir if requested:
+        # Directories potentially created by vcpkg install:
+        $private:created = @( 'BaseDir', 'ParentDir' ) + $required
+
+        # Generate a custom ParentDir from OutputDir if requested (the default is <vcpkg-root> or RootDir):
+        $private:splat = $null
         if ($PSBoundParameters.ContainsKey("OutputDir")) {
             $splat += @{ OutputDir = $OutputDir }
         }
@@ -139,39 +146,29 @@ function Install-NhcVcpkgPorts {
         $private:tagged = Get-TaggedOutputDir @splat -Normalize -AllowCwd:$false
         $splat = $null
 
-        # Build the common vcpkg arguments list:
-        if ($null -ne $tagged.OutputDir) {
-            $splat += @{ OutputDir = $tagged.OutputDir.Path }
-        }
-        $private:config = Get-CommonArguments @splat -Parameters $PSBoundParameters
-        $splat = $null
-
-        $private:outdir = $config.OutputDir.Path
-        Write-Verbose "Using output directory '$outdir'"
-
-        # Return BaseDir (normalized) and Tag with $config:
+        # Return BaseDir and Tag with $config:
+        $private:config = @{}
         $config += @{ BaseDir = $tagged.BaseDir }
         $config += @{ Tag = $tagged.Tag }
+
+        # Build the common vcpkg arguments list:
+        $tagged.OutputDir ??= @{ Path = ''; Exists = $false }
+        # Note: OutputDir must be passed as ParentDir so required directories (above) are created under either the default <vcpkg-root> or the caller-defined output directory.
+        $config += Get-CommonArguments -Parameters $PSBoundParameters -Directories $required -ParentDir $tagged.OutputDir.Path
 
         $private:exe = $config.Command
         $private:verb = 'install'
 
         $private:params = @()
         $params += $verb
-
-        # Force classic mode if ports are specified, manifest mode if all ports are selected:
-        if ($PSBoundParameters.ContainsKey("Ports")) {
-            $params += $Ports
-            $params += "--classic"
-        }
-        elseif ($PSBoundParameters.ContainsKey("All")) {
-            $params += "--feature-flags=`"manifest,versions`""
-        }
-
-        $params += $config.Arguments
         $params += "--no-print-usage"
+        $params += $config.Arguments
 
-        if ($PSCmdlet.ShouldProcess($outdir, 'vcpkg install')) {
+
+        $private:parent = $config.ParentDir.Path
+        Write-Verbose "Installing to '$parent'"
+
+        if ($PSCmdlet.ShouldProcess($parent, 'vcpkg install')) {
             Write-Verbose "Executing '$exe $params'"
         }
         else {
@@ -186,14 +183,11 @@ function Install-NhcVcpkgPorts {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false
         }
 
+
         # Try to clean up after --dry-run:
         if ($WhatIfPreference) {
-            # Only cleanup the root output directory if it was created by --dry-run:
-            $private:todo = $null
-
             # Try to clean up created output subdirectories:
-            $todo += @( 'BaseDir', 'OutputDir', 'DownloadDir', 'BuildDir', 'PackageDir', 'InstallDir' )
-
+            $private:todo = $created
             $private:ignore = $config.RootDir
             $todo | ForEach-Object {
                 if (-not $config.ContainsKey($_)) {
