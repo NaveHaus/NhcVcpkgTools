@@ -10,24 +10,24 @@ function Install-NhcVcpkgPorts {
     Build and install the requested vcpkg ports.
 
     .DESCRIPTION
-    This function wraps the 'vcpkg install' command to provide additional functionality that is inconvenient or impossible to script using response files alone (e.g. versioned builds). By default, the path is used to find the vcpkg executable, but this behavior can be overridden by the Vcpkg parameter. Also, VCPKG_* environment variables are respected unless overridden by a corresponding parameter passed to the function.
+    This function wraps the 'vcpkg install' command to provide additional functionality that is inconvenient or impossible to script using response files alone (e.g. versioned port installations). VCPKG_* environment variables are respected unless overridden by a corresponding parameter passed to the function.
 
     Note: Requires vcpkg 2024-11-12 or newer for '--classic' support.
-
-    .PARAMETER OutputDir
-    Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not passed.
-
-    .PARAMETER Tag
-    Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is passed, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
-
-    .PARAMETER Quiet
-    Suppresses all output from the vcpkg command, including errors.
 
     .PARAMETER Ports
     Installs only the specified ports. Note that vcpkg will be called with '--classic' to ignore a manifest file if present. Cannot be combined with All.
 
     .PARAMETER All
     Installs ports defined by a manifest that is found automatically by vcpkg or specified by ManifestRoot. Cannot be combined with Ports.
+
+    .PARAMETER OutputDir
+    Specifies a directory in which to build and install the selected ports. Defaults to the vcpkg root directory. The directory will be created if it does not exist. An error will be raised if OutputDir is the current directory and Tag is not passed.
+
+    .PARAMETER Tag
+    Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is passed, it will be used for the directory name. Otherwise, a timestamp with format "yyyyMMdd-HHmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+
+    .PARAMETER Quiet
+    Suppresses all output from the vcpkg command, including errors.
 
     .PARAMETER Command
     Specifies the path to the vcpkg executable to call.
@@ -59,12 +59,12 @@ function Install-NhcVcpkgPorts {
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
 
-    Builds and installs all ports defined by the default manifest file to './build/<yyMMdd-hhmmss>' for the default target triplet.
+    Builds and installs all ports defined by the default manifest file to './build/<yyyyMMdd-HHmmss>' for the default target triplet.
 
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag 1.0.0 -ManifestDir './config'
 
-    Builds and installs all ports defined by './config/vcpkg.json' to './build/<yyMMdd-hhmmss>' for the default target triplet.
+    Builds and installs all ports defined by './config/vcpkg.json' to './build/<yyyyMMdd-HHmmss>' for the default target triplet.
 
     .EXAMPLE
     Install-NhcVcpkgPorts -Ports zlib -OutputDir 'c:/vcpkg-release' -Triplet x64-windows-static
@@ -165,10 +165,10 @@ function Install-NhcVcpkgPorts {
         $params += $config.Arguments
 
 
-        $private:parent = $config.ParentDir.Path
-        Write-Verbose "Installing to '$parent'"
+        $private:target = $config.ParentDir.Path
+        Write-Verbose "Installing to '$target'"
 
-        if ($PSCmdlet.ShouldProcess($parent, 'vcpkg install')) {
+        if ($PSCmdlet.ShouldProcess($target, 'vcpkg install')) {
             Write-Verbose "Executing '$exe $params'"
         }
         else {

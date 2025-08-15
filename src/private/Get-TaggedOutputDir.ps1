@@ -17,7 +17,7 @@ function Get-TaggedOutputDir {
     The base output directory.
 
     .PARAMETER Tag
-    Add a named subdirectory under OutputDir. If a non-empty string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
+    Add a named subdirectory under OutputDir. If a non-empty string is specified, it will be used for the directory name. Otherwise, a timestamp with format "yyyyMMdd-hhmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
 
     .PARAMETER Normalize
     If passed, the returned paths are normalized by calling CovnertTo-NormalizedPath.
@@ -70,7 +70,7 @@ function Get-TaggedOutputDir {
         if ($PSBoundParameters.ContainsKey("Tag")) {
             $outtag = $Tag
             if ([string]::IsNullOrWhiteSpace($outtag)) {
-                $outtag = Get-Date -Format "yyMMdd-hhmmss"
+                $outtag = Get-Date -Format "yyyyMMdd-HHmmss"
             }
 
             # Validate the tag (note that checking a generated timestamp is intentional):

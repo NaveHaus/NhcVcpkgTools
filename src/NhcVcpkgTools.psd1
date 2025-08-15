@@ -37,6 +37,10 @@
         'Install-NhcVcpkgPorts'
     )
 
+    VariablesToExport    = @(
+      'g_NhcVcpkgValidExportFormats'
+    )
+
     # List of all files packaged with this module
     # FileList = @()
 
@@ -72,5 +76,4 @@
         } # End of PSData hashtable
 
     } # End of PrivateData hashtable
-
 }

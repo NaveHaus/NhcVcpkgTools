@@ -21,6 +21,10 @@ $private:PublicFunctions = @(
     'Install-NhcVcpkgPorts'
 )
 
+$private:PublicVariables = @(
+    'g_NhcVcpkgValidExportFormats'
+)
+
 $PrivateFunctions | ForEach-Object {
     $private:path = Join-Path -Path $Root -ChildPath 'private' -AdditionalChildPath ("{0}.ps1" -f $_)
     . $path
@@ -33,3 +37,4 @@ $PublicFunctions | ForEach-Object {
 
 # Only export public functions:
 Export-ModuleMember -Function $PublicFunctions
+Export-ModuleMember -Variable $PublicVariables
