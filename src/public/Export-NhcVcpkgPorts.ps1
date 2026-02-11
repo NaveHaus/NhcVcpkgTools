@@ -2,6 +2,7 @@ Set-StrictMode -Version 3.0
 
 . $PSScriptRoot\..\private\Get-CommonArguments.ps1
 . $PSScriptRoot\..\private\Get-TaggedOutputDir.ps1
+. $PSScriptRoot\..\private\Test-EmptyDirectory.ps1
 
 # Valid export formats. This is exported from the module so that it can be accessed from ArgumentCompleter:
 $g_NhcVcpkgValidExportFormats = @( "zip", "7zip" )
@@ -206,26 +207,26 @@ function Export-NhcVcpkgPorts {
             Write-Error "Could not determine a valid output directory."
         }
 
-        # If the target exists and could be an existing raw export or vcpkg root, raise an error to avoid overwriting it:
+        # If the target exists and is not empty, raise an error to avoid overwriting it:
         if ($Raw) {
             $private:dir = $tagged.OutputDir.Path
-            if (Test-VcpkgRoot -Path $dir) {
+            if (Test-Path -Path $dir -PathType Container) {
                 if ($Force) {
-                    Write-Warning "Overwriting '$dir' to perform a raw export, which appears to be a vcpkg root directory or an existing raw export."
+                    Write-Warning "Overwriting non-empty directory '$dir' to perform a raw export."
                 }
                 else {
-                    Write-Error "A raw export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                    Write-Error "Not overwriting '$dir'."
                 }
             }
         }
         elseif ($PSBoundParameters.ContainsKey("Output")) {
             $private:dir = Join-RelativePath -Path $tagged.OutputDir.Path -ChildPath $Output
-            if (Test-VcpkgRoot -Path $dir) {
+            if (Test-Path -Path $dir -PathType Container) {
                 if ($Force) {
-                    Write-Warning "Overwriting '$dir' to perform an archive export, which appears to be a vcpkg root directory or an existing raw export."
+                    Write-Warning "Overwriting non-empty directory '$dir' to perform an archive export."
                 }
                 else {
-                    Write-Error "An archive export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                    Write-Error "Not overwriting '$dir'."
                 }
             }
         }
