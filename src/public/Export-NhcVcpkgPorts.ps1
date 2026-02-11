@@ -4,7 +4,7 @@ Set-StrictMode -Version 3.0
 . $PSScriptRoot\..\private\Get-TaggedOutputDir.ps1
 
 # Valid export formats. This is exported from the module so that it can be accessed from ArgumentCompleter:
-$g_NhcVcpkgValidExportFormats = @( "zip", "7zip", "tgz" )
+$g_NhcVcpkgValidExportFormats = @( "zip", "7zip" )
 
 function Export-NhcVcpkgPorts {
     <#
@@ -29,7 +29,6 @@ function Export-NhcVcpkgPorts {
     Specify an export file format:
     - 7zip - Export to a .7z file.
     - Zip  - Export to a .zip file.
-    - Tgz  - Export to a .tgz file.
 
     .PARAMETER OutputDir
     Specifies a directory for the export. Defaults to './export' for raw exports and the current working directory for file-based exports. The directory will be created if it does not exist. An error will be raised if a raw export is requested, OutputDir is the current directory, and Tag is not passed.
@@ -42,6 +41,9 @@ function Export-NhcVcpkgPorts {
 
     .PARAMETER Quiet
     Suppresses all output from the vcpkg command, including errors.
+
+    .PARAMETER Force
+    Allow exporting to an existing directory, even if it appears to be a vcpkg root directory or an existing export. Also suppresses confirmation prompts.
 
     .PARAMETER Command
     Specifies the path to the vcpkg executable to call.
@@ -72,9 +74,9 @@ function Export-NhcVcpkgPorts {
     Export 'fmt' from '<vcpkg-root>/installed' to './fmt-release.zip'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports boost-filesystem,fmt -Format tgz -Triplet x64-linux
+    Export-NhcVcpkgPorts -Ports boost-filesystem,fmt -Format 7zip -Triplet x64-linux
 
-    Exports only 'boost-filesystem' and 'fmt' ports from '<vcpkg-root>'/installed for the x64-linux triplet to './vcpkg-export.tgz'.
+    Exports only 'boost-filesystem' and 'fmt' ports from '<vcpkg-root>'/installed for the x64-linux triplet to './vcpkg-export.7z'.
 
     .EXAMPLE
     Export-NhcVcpkgPorts -Ports zlib -Raw -InstallDir '/vcpkg-data/installed' -OutputDir '.' -Tag ''
@@ -92,9 +94,9 @@ function Export-NhcVcpkgPorts {
     Export 'zlib' from '/vcpkg-root/installed' to './<yyyyMMdd-hhmmss>/zlib-current.7z'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports zlib -Format tgz -Vcpkg '/vcpkg-root/vcpkg' -RootDir '/vcpkg-root' -Tag ''
+    Export-NhcVcpkgPorts -Ports zlib -Format zip -Vcpkg '/vcpkg-root/vcpkg' -RootDir '/vcpkg-root' -Tag ''
 
-    Export 'zlib' from '/vcpkg-root/installed' to './export/<yyyyMMdd-hhmmss>/vcpkg-export.tgz'.
+    Export 'zlib' from '/vcpkg-root/installed' to './export/<yyyyMMdd-hhmmss>/vcpkg-export.zip'.
 
     .OUTPUTS
     Returns a hashtable with fields:
@@ -148,6 +150,7 @@ function Export-NhcVcpkgPorts {
         [string]$Tag,
 
         [switch]$Quiet,
+        [switch]$Force,
         [string]$Command,
         [string]$Triplet,
         [string]$RootDir,
@@ -165,6 +168,10 @@ function Export-NhcVcpkgPorts {
             if (-not $g_NhcVcpkgValidExportFormats.Contains($Format.ToLower())) {
                 Write-Error "Invalid format '$Format'"
             }
+        }
+
+        if ($Force -and -not $PSBoundParameters.ContainsKey('Confirm')) {
+            $ConfirmPreference = 'None'
         }
     }
 
@@ -203,13 +210,23 @@ function Export-NhcVcpkgPorts {
         if ($Raw) {
             $private:dir = $tagged.OutputDir.Path
             if (Test-VcpkgRoot -Path $dir) {
-                Write-Error "A raw export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                if ($Force) {
+                    Write-Warning "Overwriting '$dir' to perform a raw export, which appears to be a vcpkg root directory or an existing raw export."
+                }
+                else {
+                    Write-Error "A raw export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                }
             }
         }
         elseif ($PSBoundParameters.ContainsKey("Output")) {
             $private:dir = Join-RelativePath -Path $tagged.OutputDir.Path -ChildPath $Output
             if (Test-VcpkgRoot -Path $dir) {
-                Write-Error "An archive export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                if ($Force) {
+                    Write-Warning "Overwriting '$dir' to perform an archive export, which appears to be a vcpkg root directory or an existing raw export."
+                }
+                else {
+                    Write-Error "An archive export would overwrite '$dir', which appears to be a vcpkg root directory or an existing raw export."
+                }
             }
         }
 
@@ -267,10 +284,10 @@ function Export-NhcVcpkgPorts {
         }
 
         if ($Quiet) {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false 2>&1 | Out-Null
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
         }
         else {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
         }
 
 
@@ -293,7 +310,7 @@ function Export-NhcVcpkgPorts {
                                 # Just in case:
                                 if ($clean -ne $ignore) {
                                     Write-Verbose "Cleaning up output directory '$clean' for dry run"
-                                    Remove-Item -Path $clean -Recurse -Force -WhatIf:$false
+                                    Remove-Item -Path $clean -Recurse -Force -WhatIf:$false -Confirm:$false
                                 }
                             }
                         }

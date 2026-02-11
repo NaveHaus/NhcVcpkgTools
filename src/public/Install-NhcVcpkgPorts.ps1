@@ -177,10 +177,10 @@ function Install-NhcVcpkgPorts {
         }
 
         if ($Quiet) {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false 2>&1 | Out-Null
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
         }
         else {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false
+            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
         }
 
 
@@ -203,7 +203,7 @@ function Install-NhcVcpkgPorts {
                                 # Just in case:
                                 if ($clean -ne $ignore) {
                                     Write-Verbose "Cleaning up output directory '$clean' for dry run"
-                                    Remove-Item -Path $clean -Recurse -Force -WhatIf:$false
+                                    Remove-Item -Path $clean -Recurse -Force -WhatIf:$false -Confirm:$false
                                 }
                             }
                         }
