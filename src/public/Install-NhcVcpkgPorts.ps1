@@ -41,20 +41,26 @@ function Install-NhcVcpkgPorts {
     .PARAMETER OverlayPorts
     Specifies one or more paths to overlay ports.
 
+    .PARAMETER OverlayTriplets
+    Specifies one or more paths to overlay triplets.
+
     .PARAMETER ManifestDir
     Specifies the directory containing 'vcpkg.json'. Only used if All is passed.
 
     .PARAMETER DownloadDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to store downloaded files. If OutputDir or Tag is passed, DownloadDir must be relative. Defaults to './downloads'.
+    Specifies a directory in which to store downloaded files. If relative, DownloadDir will be a subdirectory of OutputDir[/Tag]. Defaults to './downloads'.
 
     .PARAMETER BuildDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to build the ports. If OutputDir or Tag is passed, BuildDir must be relative. Defaults to './buildtrees'.
+    Specifies a directoryag] in which to build the ports. If relative, BuildDir will be a subdirectory of OutputDir[/Tag]. Defaults to './buildtrees'.
 
     .PARAMETER PackageDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to store packaged ports. If OutputDir or Tag is passed, PackageDir must be relative. Defaults to './packages'.
+    Specifies a directory in which to store packaged ports. If relative, PackageDir will be a subdirectory of OutputDir[/Tag]. Defaults to './packages'.
 
     .PARAMETER InstallDir
-    Specifies a subdirectory of OutputDir[/Tag] in which to install the selected ports. If OutputDir or Tag is passed, InstallDir must be relative. Defaults to './installed'.
+    Specifies a directory in which to install the selected ports. If relative, InstallDir will be a subdirectory of OutputDir[/Tag]. Defaults to './installed'.
+
+    .PARAMETER BinarySources
+    Specifies one or more binary sources to use for finding and/or saving ports.
 
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
@@ -119,7 +125,9 @@ function Install-NhcVcpkgPorts {
         [string]$BuildDir,
         [string]$PackageDir,
         [string]$InstallDir,
-        [string[]]$OverlayPorts
+        [string[]]$OverlayPorts,
+        [string[]]$OverlayTriplets,
+        [string[]]$BinarySources
     )
 
     begin {
@@ -164,7 +172,6 @@ function Install-NhcVcpkgPorts {
         $params += "--no-print-usage"
         $params += $config.Arguments
 
-
         $private:target = $config.ParentDir.Path
         Write-Verbose "Installing to '$target'"
 
@@ -182,7 +189,6 @@ function Install-NhcVcpkgPorts {
         else {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
         }
-
 
         # Try to clean up after --dry-run:
         if ($WhatIfPreference) {

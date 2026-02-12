@@ -58,6 +58,9 @@ function Export-NhcVcpkgPorts {
     .PARAMETER OverlayPorts
     Specifies one or more paths to overlay ports.
 
+    .PARAMETER OverlayTriplets
+    Specifies one or more paths to overlay triplets.
+
     .PARAMETER ManifestDir
     Specifies the directory containing 'vcpkg.json'. Only used if All is passed.
 
@@ -156,7 +159,8 @@ function Export-NhcVcpkgPorts {
         [string]$Triplet,
         [string]$RootDir,
         [string]$InstallDir,
-        [string[]]$OverlayPorts
+        [string[]]$OverlayPorts,
+        [string[]]$OverlayTriplets
     )
 
     begin {

@@ -4,6 +4,7 @@ Set-StrictMode -Version 3.0
 . $PSScriptRoot\Get-Executable.ps1
 . $PSScriptRoot\Get-DefaultTriplet.ps1
 . $PSScriptRoot\Join-RelativePath.ps1
+. $PSScriptRoot\Test-AbsolutePath.ps1
 . $PSScriptRoot\Test-Executable.ps1
 . $PSScriptRoot\Test-VcpkgRoot.ps1
 
@@ -32,13 +33,15 @@ function Get-CommonArguments {
     - All (enabled --feature-flags=manifest,versions)
     - RootDir (--vcpkg-root)
     - Triplet (--triplet)
-    - OverlayPorts (--overlay-ports)
+    - OverlayPorts (--overlay-ports[])
+    - OverlayTriplets (--overlay-triplets[])
     - ManifestDir (--x-manifest-root)
     - OutputDir (--output-dir). No default.
     - DownloadDir (--downloads-root). Defaults to '<vcpkg-root>/downloads'
     - BuildDir (--x-buildtrees-root). Defaults to '<vcpkg-root>/buildtrees'
     - PackageDir (--x-packages-root). Defaults to '<vcpkg-root>/packages'
     - InstallDir (--x-install-root). Defaults to '<vcpkg-root>/installed'
+    - BinarySources (--binarysource[])
 
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
@@ -201,6 +204,19 @@ function Get-CommonArguments {
             }
         }
 
+        if ($Parameters.ContainsKey("OverlayTriplets")) {
+            $Parameters.OverlayTriplets | ForEach-Object {
+                # vcpkg doesn't like trailing '\' on Windows, and Resolve-Path leaves them, so use
+                # Join-RelativePath to remove them:
+                $private:dir = Join-RelativePath -Path $_ -ChildPath . -Resolve -ErrorAction Ignore
+                if ($null -eq $dir) {
+                    Write-Error "The overlay port directory '$_' does not exist or is not a directory."
+                }
+                $params += "--overlay-triplets=`"$dir`""
+                Write-Verbose "Using overlay ports from '$dir'"
+            }
+        }
+
         # Setup the default parent for outputs:
         $private:parent = $root
         if ($PSBoundParameters.ContainsKey("ParentDir")) {
@@ -225,13 +241,7 @@ function Get-CommonArguments {
 
         # Setup default output paths:
         if ($Directories.Contains("DownloadDir")) {
-            if ($Parameters.ContainsKey("DownloadDir")) {
-                # vcpkg doesn't like trailing '\' on Windows, so remove them:
-                $private:DownloadDir = ConvertTo-NormalizedPath($Parameters.DownloadDir)
-            }
-            else {
-                $private:DownloadDir = Join-RelativePath -Path $parent -ChildPath 'downloads'
-            }
+            $private:DownloadDir = Get-NormalizedNamedDir -Parameters $Parameters -Name 'DownloadDir' -ParentPath $parent -DefaultPath 'downloads'
             $params += "--downloads-root=`"$DownloadDir`""
             $result += @{
                 DownloadDir = @{
@@ -242,13 +252,7 @@ function Get-CommonArguments {
         }
 
         if ($Directories.Contains("BuildDir")) {
-            if ($Parameters.ContainsKey("BuildDir")) {
-                # vcpkg doesn't like trailing '\' on Windows, so remove them:
-                $private:BuildDir = ConvertTo-NormalizedPath($Parameters.BuildDir)
-            }
-            else {
-                $BuildDir = Join-RelativePath -Path $parent -ChildPath 'buildtrees'
-            }
+            $private:BuildDir = Get-NormalizedNamedDir -Parameters $Parameters -Name 'BuildDir' -ParentPath $parent -DefaultPath 'buildtrees'
             $params += "--x-buildtrees-root=`"$BuildDir`""
             $result += @{
                 BuildDir = @{
@@ -259,13 +263,7 @@ function Get-CommonArguments {
         }
 
         if ($Directories.Contains("PackageDir")) {
-            if ($Parameters.ContainsKey("PackageDir")) {
-                # vcpkg doesn't like trailing '\' on Windows, so remove them:
-                $private:PackageDir = ConvertTo-NormalizedPath($Parameters.PackageDir)
-            }
-            else {
-                $PackageDir = Join-RelativePath -Path $parent -ChildPath 'packages'
-            }
+            $private:PackageDir = Get-NormalizedNamedDir -Parameters $Parameters -Name 'PackageDir' -ParentPath $parent -DefaultPath 'packages'
             $params += "--x-packages-root=`"$PackageDir`""
             $result += @{
                 PackageDir = @{
@@ -276,13 +274,7 @@ function Get-CommonArguments {
         }
 
         if ($Directories.Contains("InstallDir")) {
-            if ($Parameters.ContainsKey("InstallDir")) {
-                # vcpkg doesn't like trailing '\' on Windows, so remove them:
-                $private:InstallDir = ConvertTo-NormalizedPath($Parameters.InstallDir)
-            }
-            else {
-                $InstallDir = Join-RelativePath -Path $parent -ChildPath 'installed'
-            }
+            $private:InstallDir = Get-NormalizedNamedDir -Parameters $Parameters -Name 'InstallDir' -ParentPath $parent -DefaultPath 'installed'
             $params += "--x-install-root=`"$InstallDir`""
             $result += @{
                 InstallDir = @{
@@ -305,8 +297,55 @@ function Get-CommonArguments {
             $params += "--output-dir=`"$OutputDir`""
         }
 
+        if ($Parameters.ContainsKey("BinarySources")) {
+            $Parameters.BinarySources | ForEach-Object {
+                $params += "--binarysource=`"$_`""
+                Write-Verbose "Adding binary source '$_'"
+            }
+
+        }
+
         # Done:
         $result += @{ Arguments = $params }
         return $result
+    }
+}
+
+function Get-NormalizedNamedDir {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, Position = 0)]
+        [hashtable]$Parameters,
+        [Parameter(Mandatory = $true, Position = 1)]
+        [string]$Name,
+        [Parameter(Mandatory = $true, Position = 2)]
+        [string]$ParentPath,
+        [Parameter(Mandatory = $true, Position = 3)]
+        [string]$DefaultPath
+    )
+
+    begin {
+        if (-not $PSBoundParameters.ContainsKey('ErrorAction')) {
+            $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        }
+    }
+
+    process {
+        if ($Parameters.ContainsKey($Name)) {
+            $private:dir = $Parameters.$Name
+        }
+        else {
+            $private:dir = $DefaultPath
+        }
+
+        $paths = @{ 'Path' = $ParentPath }
+        if (!(Test-AbsolutePath -Path $dir)) {
+            $paths += @{ 'ChildPath' = $dir }
+        }
+
+        # vcpkg doesn't like trailing '\' on Windows, so remove them:
+        return ConvertTo-NormalizedPath(
+            Join-RelativePath -Path $ParentPath -ChildPath $dir
+        )
     }
 }
