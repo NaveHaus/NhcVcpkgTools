@@ -213,7 +213,7 @@ function Get-CommonArguments {
                     Write-Error "The overlay port directory '$_' does not exist or is not a directory."
                 }
                 $params += "--overlay-triplets=`"$dir`""
-                Write-Verbose "Using overlay ports from '$dir'"
+                Write-Verbose "Using overlay triplets from '$dir'"
             }
         }
 
@@ -275,6 +275,7 @@ function Get-CommonArguments {
 
         if ($Directories.Contains("InstallDir")) {
             $private:InstallDir = Get-NormalizedNamedDir -Parameters $Parameters -Name 'InstallDir' -ParentPath $parent -DefaultPath 'installed'
+
             $params += "--x-install-root=`"$InstallDir`""
             $result += @{
                 InstallDir = @{
@@ -286,7 +287,6 @@ function Get-CommonArguments {
 
         # Include OutputDir if requested:
         if ($Directories.Contains("OutputDir")) {
-            Write-Host "1"
             $private:OutputDir = $null
             if ($Parameters.ContainsKey("OutputDir")) {
                 $OutputDir = ConvertTo-NormalizedPath($Parameters.OutputDir)
@@ -302,7 +302,6 @@ function Get-CommonArguments {
                 $params += "--binarysource=`"$_`""
                 Write-Verbose "Adding binary source '$_'"
             }
-
         }
 
         # Done:
@@ -338,14 +337,16 @@ function Get-NormalizedNamedDir {
             $private:dir = $DefaultPath
         }
 
-        $paths = @{ 'Path' = $ParentPath }
-        if (!(Test-AbsolutePath -Path $dir)) {
+        if (Test-AbsolutePath -Path $dir) {
+            $paths = @{ 'Path' = $dir }
+            $paths += @{ 'ChildPath' = '.' }
+        }
+        else {
+            $paths = @{ 'Path' = $ParentPath }
             $paths += @{ 'ChildPath' = $dir }
         }
 
         # vcpkg doesn't like trailing '\' on Windows, so remove them:
-        return ConvertTo-NormalizedPath(
-            Join-RelativePath -Path $ParentPath -ChildPath $dir
-        )
+        return ConvertTo-NormalizedPath(Join-RelativePath @paths)
     }
 }
