@@ -5,7 +5,7 @@ Set-StrictMode -Version 3.0
 . $PSScriptRoot\..\private\Test-EmptyDirectory.ps1
 
 # Valid export formats. This is exported from the module so that it can be accessed from ArgumentCompleter:
-$g_NhcVcpkgValidExportFormats = @( "zip", "7zip" )
+$g_NhcVcpkgValidExportFormats = @( "zip", "7zip", "nuget" )
 
 function Export-NhcVcpkgPorts {
     <#
@@ -28,8 +28,9 @@ function Export-NhcVcpkgPorts {
 
     .PARAMETER Format
     Specify an export file format:
-    - 7zip - Export to a .7z file.
-    - Zip  - Export to a .zip file.
+    - 7zip  - Export to a .7z file.
+    - Zip   - Export to a .zip file.
+    - Nuget - Export to a .npkg file
 
     .PARAMETER OutputDir
     Specifies a directory for the export. Defaults to './export' for raw exports and the current working directory for file-based exports. The directory will be created if it does not exist. An error will be raised if a raw export is requested, OutputDir is the current directory, and Tag is not passed.
@@ -111,6 +112,7 @@ function Export-NhcVcpkgPorts {
     - OutputDir = @{ Path, Exists }: The output directory including the Tag if it was passed or generated.
     - InstallDir = @{ Path, Exists }: The string passed to --x-install-root.
     - Tag: The tag if one was passed or generated, $null otherwise.
+    - Status: $true if the export succeeded, $false otherwise.
 
     The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked.
 
@@ -290,11 +292,19 @@ function Export-NhcVcpkgPorts {
 
         if ($Quiet) {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
+            $private:status = $?
         }
         else {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
+            $private:status = $?
         }
 
+        if (0 -eq $status) {
+            $config.Status = $true
+        }
+        else {
+            $config.Status = $false
+        }
 
         # Try to clean up after --dry-run:
         if ($WhatIfPreference) {

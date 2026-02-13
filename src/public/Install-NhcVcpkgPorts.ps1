@@ -97,6 +97,7 @@ function Install-NhcVcpkgPorts {
     - PackageDir = @{ Path, Exists }: The string passed to --x-packages-root.
     - InstallDir = @{ Path, Exists }: The string passed to --x-install-root.
     - Tag: The tag if one was passed or generated, $null otherwise.
+    - Status: $true if the installation succeeded, $false otherwise.
 
     The "Exists" fields indicate whether or not the corresponding directory existed before this function was invoked.
 
@@ -189,9 +190,18 @@ function Install-NhcVcpkgPorts {
 
         if ($Quiet) {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
+            $private:status = $?
         }
         else {
             Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
+            $private:status = $?
+        }
+
+        if (0 -eq $status) {
+            $config.Status = $true
+        }
+        else {
+            $config.Status = $false
         }
 
         # Try to clean up after --dry-run:
