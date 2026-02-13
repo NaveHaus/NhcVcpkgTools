@@ -42,6 +42,7 @@ function Get-CommonArguments {
     - PackageDir (--x-packages-root). Defaults to '<vcpkg-root>/packages'
     - InstallDir (--x-install-root). Defaults to '<vcpkg-root>/installed'
     - BinarySources (--binarysource[])
+    - CachedOnly (--only-binarycaching)
 
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
@@ -302,6 +303,11 @@ function Get-CommonArguments {
                 $params += "--binarysource=`"$_`""
                 Write-Verbose "Adding binary source '$_'"
             }
+        }
+
+        if ($Parameters.ContainsKey("CachedOnly")) {
+            $params += "--only-binarycaching"
+            Write-Verbose "Adding binary source '$_'"
         }
 
         # Done:

@@ -62,6 +62,9 @@ function Install-NhcVcpkgPorts {
     .PARAMETER BinarySources
     Specifies one or more binary sources to use for finding and/or saving ports.
 
+    .PARAMETER CachedOnly
+    Only install ports from the binary cache(s) defined in BinarySources. Results in an error if a port cannot be found in a cache.
+
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
 
@@ -127,7 +130,8 @@ function Install-NhcVcpkgPorts {
         [string]$InstallDir,
         [string[]]$OverlayPorts,
         [string[]]$OverlayTriplets,
-        [string[]]$BinarySources
+        [string[]]$BinarySources,
+        [switch]$CachedOnly
     )
 
     begin {
