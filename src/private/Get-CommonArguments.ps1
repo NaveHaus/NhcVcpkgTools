@@ -43,6 +43,7 @@ function Get-CommonArguments {
     - InstallDir (--x-install-root). Defaults to '<vcpkg-root>/installed'
     - BinarySources (--binarysource[])
     - CachedOnly (--only-binarycaching)
+    - Editable (--editable)
 
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
@@ -307,7 +308,10 @@ function Get-CommonArguments {
 
         if ($Parameters.ContainsKey("CachedOnly")) {
             $params += "--only-binarycaching"
-            Write-Verbose "Adding binary source '$_'"
+        }
+
+        if ($Parameters.ContainsKey("Editable")) {
+            $params += "--editable"
         }
 
         # Done:

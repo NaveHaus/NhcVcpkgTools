@@ -65,6 +65,9 @@ function Install-NhcVcpkgPorts {
     .PARAMETER CachedOnly
     Only install ports from the binary cache(s) defined in BinarySources. Results in an error if a port cannot be found in a cache.
 
+    .PARAMETER Editable
+    Do not delete and recreate port source directories.
+
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
 
@@ -132,7 +135,8 @@ function Install-NhcVcpkgPorts {
         [string[]]$OverlayPorts,
         [string[]]$OverlayTriplets,
         [string[]]$BinarySources,
-        [switch]$CachedOnly
+        [switch]$CachedOnly,
+        [switch]$Editable
     )
 
     begin {
