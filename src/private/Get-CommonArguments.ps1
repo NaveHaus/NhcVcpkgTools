@@ -164,7 +164,7 @@ function Get-CommonArguments {
 
         # Force classic mode if ports are specified, manifest mode if all ports are selected:
         if ($Parameters.ContainsKey("Ports")) {
-            $params += $Ports
+            $params += $Parameters.Ports
             $params += "--classic"
         }
         elseif ($Parameters.ContainsKey("All")) {
