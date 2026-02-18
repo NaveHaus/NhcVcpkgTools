@@ -27,7 +27,7 @@
             # Tags = @()
 
             # A URL to the license for this module.
-            # LicenseUri = ''
+            LicenseUri = 'https://github.com/NaveHaus/NhcVcpkgTools/blob/master/LICENSE'
 
             # A URL to the main website for this project.
             # ProjectUri = ''
