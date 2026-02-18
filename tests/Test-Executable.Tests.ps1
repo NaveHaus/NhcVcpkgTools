@@ -27,6 +27,7 @@ Describe 'Test-Executable' {
             Test-Executable -Path $powershellDir -Name $powershellName | Should -BeTrue
         }
         It 'returns false for an invalid name in known directory' {
+            { Test-Executable -Path $powershellDir -Name "notareal.exe" } | Should -Not -Throw
             Test-Executable -Path $powershellDir -Name "notareal.exe" | Should -BeFalse
         }
         It 'returns false for invalid directory' {

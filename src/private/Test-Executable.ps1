@@ -42,14 +42,10 @@ function Test-Executable {
     process {
         # Need the full path:
         $private:full = Resolve-Path -Path $Path -Force -ErrorAction Ignore
-
-        # Doesn't exist:
         if ($null -eq $full) {
             return $false
         }
 
-        # Temporarily add the parent directory to the path and see if Get-Command can find the
-        # executable by name:
         if ($PSCmdlet.ParameterSetName -eq "Name") {
             if (-not (Test-FileNameString -FileName $Name)) {
                 return $false
@@ -67,9 +63,8 @@ function Test-Executable {
             $private:dir = [System.IO.Path]::GetDirectoryName($full)
             $private:name = [System.IO.Path]::GetFileName($full)
         }
-        Write-Host "Testing '$dir / $name'"
+
         $private:exe = Join-Path -Path $dir -ChildPath $name
-        Write-Host "Got '$exe'"
         Write-Verbose "Testing '$exe'"
 
         $result = Get-BinaryType -Path $exe
