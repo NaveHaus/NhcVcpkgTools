@@ -2,6 +2,7 @@ Set-StrictMode -Version 3.0
 
 . $PSScriptRoot\Test-FileNameString.ps1
 . $PSScriptRoot\Test-PathString.ps1
+. $PSScriptRoot\Get-BinaryType.ps1
 
 function Test-Executable {
     <#
@@ -66,31 +67,12 @@ function Test-Executable {
             $private:dir = [System.IO.Path]::GetDirectoryName($full)
             $private:name = [System.IO.Path]::GetFileName($full)
         }
+        Write-Host "Testing '$dir / $name'"
+        $private:exe = Join-Path -Path $dir -ChildPath $name
+        Write-Host "Got '$exe'"
+        Write-Verbose "Testing '$exe'"
 
-        Write-Verbose "Testing '$name' in path '$dir'"
-
-        $private:old = $env:PATH
-        $env:PATH = $dir
-        $private:exedir = $null
-        try {
-            $private:exe = (Get-Command -CommandType Application -Name $name -TotalCount 1).Source
-            if ($null -ne $exe) {
-                $exe = Resolve-Path -Path $exe -Force
-                $private:exedir = [System.IO.Path]::GetDirectoryName($exe)
-            }
-        }
-        finally {
-            $env:PATH = $old
-        }
-
-        # Only match if the executable was found in the requested parent directory:
-        if ($null -eq $exedir) {
-            Write-Verbose "Executable '$name' not found"
-            return $false
-        }
-        else {
-            Write-Verbose "Found exeutable '$name' in '$exedir'"
-            return $exedir -eq $dir
-        }
+        $result = Get-BinaryType -Path $exe
+        return ($result -ne 'NONE')
     }
 }
