@@ -1,8 +1,8 @@
 Describe 'Test-Executable' {
     BeforeAll {
-        . "$PSScriptRoot/../src/private/Test-FileNameString.ps1"
-        . "$PSScriptRoot/../src/private/Test-PathString.ps1"
-        . "$PSScriptRoot/../src/private/Test-Executable.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-FileNameString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-PathString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-Executable.ps1"
         $powershellExe = (Get-Command -Name "powershell" -CommandType Application).Source
         $powershellDir = [System.IO.Path]::GetDirectoryName($powershellExe)
         $powershellName = [System.IO.Path]::GetFileName($powershellExe)

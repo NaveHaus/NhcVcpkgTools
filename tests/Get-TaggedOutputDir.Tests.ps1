@@ -1,11 +1,11 @@
 Describe 'Get-TaggedOutputDir' {
     BeforeAll {
-        . "$PSScriptRoot/../src/private/ConvertTo-NormalizedPath.ps1"
-        . "$PSScriptRoot/../src/private/Get-PathInfo.ps1"
-        . "$PSScriptRoot/../src/private/Join-RelativePath.ps1"
-        . "$PSScriptRoot/../src/private/Test-PathString.ps1"
-        . "$PSScriptRoot/../src/private/Test-FileNameString.ps1"
-        . "$PSScriptRoot/../src/private/Get-TaggedOutputDir.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/ConvertTo-NormalizedPath.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-PathInfo.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Join-RelativePath.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-PathString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-FileNameString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-TaggedOutputDir.ps1"
         $baseDir = Join-Path $TestDrive "base"
         New-Item -Path $baseDir -ItemType Directory | Out-Null
     }

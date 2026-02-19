@@ -1,9 +1,9 @@
 BeforeAll {
-    . "$PSScriptRoot/../src/private/Get-CommonArguments.ps1"
-    . "$PSScriptRoot/../src/private/Test-VcpkgRoot.ps1"
-    . "$PSScriptRoot/../src/private/Test-Executable.ps1"
-    . "$PSScriptRoot/../src/private/Get-Executable.ps1"
-    . "$PSScriptRoot/../src/private/ConvertTo-NormalizedPath.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-CommonArguments.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-VcpkgRoot.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-Executable.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-Executable.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/ConvertTo-NormalizedPath.ps1"
 }
 
 Describe 'Get-CommonArguments' {

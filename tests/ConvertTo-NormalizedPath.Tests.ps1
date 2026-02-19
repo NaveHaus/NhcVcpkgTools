@@ -1,5 +1,5 @@
 BeforeAll {
-    . "$PSScriptRoot/../src/private/ConvertTo-NormalizedPath.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/ConvertTo-NormalizedPath.ps1"
 }
 
 Describe 'ConvertTo-NormalizedPath' {

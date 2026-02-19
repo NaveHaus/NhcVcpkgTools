@@ -1,8 +1,8 @@
 Describe 'Get-Executable' {
     BeforeAll {
-        . "$PSScriptRoot/../src/private/Test-FileNameString.ps1"
-        . "$PSScriptRoot/../src/private/Test-PathString.ps1"
-        . "$PSScriptRoot/../src/private/Get-Executable.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-FileNameString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-PathString.ps1"
+    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-Executable.ps1"
     }
 
     Context 'Basic Functionality' {

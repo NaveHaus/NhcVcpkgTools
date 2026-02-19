@@ -1,6 +1,6 @@
 Describe 'Test-PathString' {
     BeforeAll {
-        . "$PSScriptRoot/../src/private/Test-PathString.ps1"
+        . "$PSScriptRoot/../NhcVcpkgTools/private/Test-PathString.ps1"
     }
 
     Context 'Valid paths' {
