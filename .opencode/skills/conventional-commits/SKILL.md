@@ -105,6 +105,9 @@ Write commit messages following Conventional Commits v1.0.0.
 - Do not include any footers unless explicitly requested by the user
 
 ### General
+- Prefer a single-line (i.e. description only) commit message when the number and/or scope of changes is small; e.g.:
+  - No more than 20 single-line changes across 5 or fewer files
+  - The addition of 2 or fewer files with a well-defined purpose that can be described in a single line
 - If unsure about the commit message format or content, or if the content to be summarized is ambiguous or unclear, ask the user for clarification
 
 ## Steps
