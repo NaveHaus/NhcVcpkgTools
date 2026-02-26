@@ -68,6 +68,9 @@ function Install-NhcVcpkgPorts {
     .PARAMETER Editable
     Do not delete and recreate port source directories.
 
+    .PARAMETER ExactVersions
+    Enforces exact version usage for build tools from the manifest file. Corresponds to the vcpkg flag '--x-abi-tools-use-exact-versions'.
+
     .EXAMPLE
     Install-NhcVcpkgPorts -All -Tag ''
 
@@ -136,7 +139,8 @@ function Install-NhcVcpkgPorts {
         [string[]]$OverlayTriplets,
         [string[]]$BinarySources,
         [switch]$CachedOnly,
-        [switch]$Editable
+        [switch]$Editable,
+        [switch]$ExactVersions
     )
 
     begin {

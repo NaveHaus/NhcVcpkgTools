@@ -44,6 +44,7 @@ function Get-CommonArguments {
     - BinarySources (--binarysource[])
     - CachedOnly (--only-binarycaching)
     - Editable (--editable)
+    - ExactVersions (--x-abi-tools-use-exact-versions)
 
     .PARAMETER Parameters
     The required hashtable of name-value pairs to extract common arguments from.
@@ -312,6 +313,10 @@ function Get-CommonArguments {
 
         if ($Parameters.ContainsKey("Editable")) {
             $params += "--editable"
+        }
+
+        if ($Parameters.ContainsKey("ExactVersions") -and $Parameters.ExactVersions) {
+            $params += "--x-abi-tools-use-exact-versions"
         }
 
         # Done:
