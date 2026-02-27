@@ -1,6 +1,6 @@
 Describe 'Install-NhcVcpkgPorts' {
     BeforeAll {
-        . "$PSScriptRoot/../NhcVcpkgTools/public/Install-NhcVcpkgPorts.ps1"
+        . "$PSScriptRoot/../../NhcVcpkgTools/Public/Install-NhcVcpkgPorts.ps1"
 
         function New-TestVcpkgRoot {
             $rootDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())

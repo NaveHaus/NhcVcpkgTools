@@ -1,9 +1,9 @@
 Describe 'Join-RelativePath' {
     BeforeAll {
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-AbsolutePath.ps1"
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-PathString.ps1"
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-FileNameString.ps1"
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Join-RelativePath.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-AbsolutePath.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-PathString.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-FileNameString.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Join-RelativePath.ps1"
         $baseDir = Join-Path $TestDrive "base"
         New-Item -Path $baseDir -ItemType Directory | Out-Null
         $childName = "file.txt"

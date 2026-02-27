@@ -26,12 +26,12 @@ $private:PublicVariables = @(
 )
 
 $PrivateFunctions | ForEach-Object {
-    $private:path = Join-Path -Path $Root -ChildPath 'private' -AdditionalChildPath ("{0}.ps1" -f $_)
+    $private:path = Join-Path -Path $Root -ChildPath 'Private' -AdditionalChildPath ("{0}.ps1" -f $_)
     . $path
 }
 
 $PublicFunctions | ForEach-Object {
-    $private:path = Join-Path -Path $Root -ChildPath 'public' -AdditionalChildPath ("{0}.ps1" -f $_)
+    $private:path = Join-Path -Path $Root -ChildPath 'Public' -AdditionalChildPath ("{0}.ps1" -f $_)
     . $path
 }
 

@@ -1,5 +1,5 @@
 BeforeAll {
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-DefaultTriplet.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Get-DefaultTriplet.ps1"
 }
 
 Describe 'Get-DefaultTriplet' {

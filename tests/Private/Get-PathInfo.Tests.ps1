@@ -1,7 +1,7 @@
 Describe 'Get-PathInfo' {
     BeforeAll {
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Join-RelativePath.ps1"
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Get-PathInfo.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Join-RelativePath.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Get-PathInfo.ps1"
         $testFile = Join-Path $TestDrive 'testfile.txt'
         Set-Content -Path $testFile -Value 'hello'
     }

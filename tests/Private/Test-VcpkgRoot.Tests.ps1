@@ -1,7 +1,7 @@
 Describe 'Test-VcpkgRoot' {
     BeforeAll {
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Join-RelativePath.ps1"
-    . "$PSScriptRoot/../NhcVcpkgTools/private/Test-VcpkgRoot.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Join-RelativePath.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-VcpkgRoot.ps1"
         $rootDir = Join-Path $TestDrive "vcpkgroot"
         New-Item -Path $rootDir -ItemType Directory | Out-Null
         New-Item -Path (Join-Path $rootDir ".vcpkg-root") -ItemType File | Out-Null

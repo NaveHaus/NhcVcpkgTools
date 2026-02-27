@@ -1,6 +1,6 @@
 Describe 'Test-FileNameString' {
     BeforeAll {
-        . "$PSScriptRoot/../NhcVcpkgTools/private/Test-FileNameString.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-FileNameString.ps1"
     }
 
     Context 'Valid file names' {

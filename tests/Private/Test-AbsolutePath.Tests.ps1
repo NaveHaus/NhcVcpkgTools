@@ -1,6 +1,6 @@
 Describe 'Test-AbsolutePath' {
     BeforeAll {
-        . "$PSScriptRoot/../NhcVcpkgTools/private/Test-AbsolutePath.ps1"
+    . "$PSScriptRoot/../../NhcVcpkgTools/Private/Test-AbsolutePath.ps1"
     }
 
     Context 'Validates absolute and relative paths' {
