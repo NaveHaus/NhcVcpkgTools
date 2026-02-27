@@ -8,6 +8,10 @@ license: MIT
 
 Write commit messages following Conventional Commits v1.0.0.
 
+## Requirements
+- Follow all steps exactly as presented
+- Do not add, remove or modify steps
+
 ## Prerequisites
 1. Determine if there are changes to be committed:
   - Evaluate the output of `git diff --name-only --staged`:
@@ -121,7 +125,8 @@ Write commit messages following Conventional Commits v1.0.0.
   - Determine the message type from the content to be summarized by following [Determining the Message Type](#determining-the-message-type)
   - Generate the commit message from the content to be summarized by following [Best Practices](#best-practices)
 
-3. Present the commit message for user review:
+3. Complete the commit:
+   - Show the commit message to the user
    - Use a suitable "**Ask**"-like tool if available to present the user with the following options:
      - Use the generated commit message
      - Enter a custom commit message
