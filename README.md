@@ -9,9 +9,13 @@ Tools for working with vcpkg from PowerShell.
 
 NhcVcpkgTools is a PowerShell module that provides helper functions for interacting with the vcpkg C++ package manager.
 
+## Requirements
+
+- PowerShell 7.4+
+
 ## Description
 
-This module simplifies common vcpkg tasks by providing a set of functions to manage your vcpkg environment. It helps with installing and exporting vcpkg ports, locating vcpkg roots, and other common tasks. The module is designed for PowerShell 7.2+ and follows standard module practices.
+This module simplifies common vcpkg tasks by providing a set of functions to manage your vcpkg environment. It helps with installing and exporting vcpkg ports, locating vcpkg roots, and other common tasks. The module is designed for PowerShell 7.4+ and follows standard module practices.
 
 The following functions are exported by this module:
 

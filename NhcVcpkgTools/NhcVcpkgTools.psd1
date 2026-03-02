@@ -8,7 +8,7 @@
     CompanyName          = 'NaveHaus Consulting LLC'
     Copyright            = '(c) NaveHaus Consulting LLC.'
     Description          = 'Tools for working with vcpkg from PowerShell.'
-    PowerShellVersion    = '7.2'
+    PowerShellVersion    = '7.4'
     RequiredModules      = @()
     AliasesToExport      = @()
     FunctionsToExport    = @(

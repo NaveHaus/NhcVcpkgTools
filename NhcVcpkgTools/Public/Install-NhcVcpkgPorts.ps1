@@ -62,6 +62,12 @@ function Install-NhcVcpkgPorts {
     .PARAMETER BinarySources
     Specifies one or more binary sources to use for finding and/or saving ports.
 
+    .PARAMETER Env
+    Specifies environment variables to pass to the spawned vcpkg process via Start-Process -Environment. This is a per-invocation overlay and does not mutate the caller's $env:. `$null values are passed through to unset variables in the child process.
+
+    .PARAMETER KeepEnvVars
+    Specifies variable names to preserve in vcpkg by setting VCPKG_KEEP_ENV_VARS in the child process environment. Entries are joined with ';'. If both Env['VCPKG_KEEP_ENV_VARS'] and KeepEnvVars are provided, KeepEnvVars takes precedence.
+
     .PARAMETER CachedOnly
     Only install ports from the binary cache(s) defined in BinarySources. Results in an error if a port cannot be found in a cache.
 
@@ -138,6 +144,8 @@ function Install-NhcVcpkgPorts {
         [string[]]$OverlayPorts,
         [string[]]$OverlayTriplets,
         [string[]]$BinarySources,
+        [hashtable]$Env,
+        [string[]]$KeepEnvVars,
         [switch]$CachedOnly,
         [switch]$Editable,
         [switch]$ExactVersions
@@ -188,6 +196,21 @@ function Install-NhcVcpkgPorts {
         $private:target = $config.ParentDir.Path
         Write-Verbose "Installing to '$target'"
 
+        $private:environment = @{}
+        if ($PSBoundParameters.ContainsKey('Env') -and $null -ne $Env) {
+            foreach ($key in $Env.Keys) {
+                $environment[$key] = $Env[$key]
+            }
+        }
+
+        if ($PSBoundParameters.ContainsKey('KeepEnvVars')) {
+            $environment['VCPKG_KEEP_ENV_VARS'] = ($KeepEnvVars -join ';')
+        }
+
+        if (0 -eq $environment.Count) {
+            $environment = $null
+        }
+
         if ($PSCmdlet.ShouldProcess($target, 'vcpkg install')) {
             Write-Verbose "Executing '$exe $params'"
         }
@@ -197,11 +220,11 @@ function Install-NhcVcpkgPorts {
         }
 
         if ($Quiet) {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
+            Start-Process -FilePath $exe -ArgumentList $params -Environment $environment -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
             $private:status = $?
         }
         else {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
+            Start-Process -FilePath $exe -ArgumentList $params -Environment $environment -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
             $private:status = $?
         }
 

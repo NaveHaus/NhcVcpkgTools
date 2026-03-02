@@ -16,6 +16,7 @@ Describe 'Install-NhcVcpkgPorts' {
     BeforeEach {
         $script:capturedArguments = $null
         $script:capturedCommand = $null
+        $script:capturedEnvironment = $null
         $script:triplet = 'x64-windows'
         $script:rootInfo = New-TestVcpkgRoot
 
@@ -24,6 +25,7 @@ Describe 'Install-NhcVcpkgPorts' {
             param(
                 [string]$FilePath,
                 [object[]]$ArgumentList,
+                [hashtable]$Environment,
                 [switch]$NoNewWindow,
                 [switch]$Wait,
                 [switch]$WhatIf,
@@ -32,6 +34,7 @@ Describe 'Install-NhcVcpkgPorts' {
 
             $script:capturedCommand = $FilePath
             $script:capturedArguments = $ArgumentList
+            $script:capturedEnvironment = $Environment
             return $null
         }
     }
@@ -92,6 +95,63 @@ Describe 'Install-NhcVcpkgPorts' {
             $script:capturedArguments | Should -Contain '--only-binarycaching'
             $script:capturedArguments | Should -Contain '--editable'
             $script:capturedArguments | Should -Contain '--x-abi-tools-use-exact-versions'
+        }
+    }
+
+    Context 'Environment parameters' {
+        It 'passes Env hashtable entries to Start-Process -Environment' {
+            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'bar' }
+
+            $script:capturedEnvironment | Should -Not -BeNullOrEmpty
+            $script:capturedEnvironment.ContainsKey('FOO') | Should -BeTrue
+            $script:capturedEnvironment['FOO'] | Should -Be 'bar'
+        }
+
+        It 'passes null Env values through to Start-Process -Environment' {
+            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = $null }
+
+            $script:capturedEnvironment | Should -Not -BeNullOrEmpty
+            $script:capturedEnvironment.ContainsKey('FOO') | Should -BeTrue
+            $script:capturedEnvironment['FOO'] | Should -Be $null
+        }
+
+        It 'does not mutate caller env when Env is provided' {
+            $originalFoo = $env:FOO
+            try {
+                $env:FOO = 'original'
+
+                $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'child' }
+
+                $env:FOO | Should -Be 'original'
+                $script:capturedEnvironment['FOO'] | Should -Be 'child'
+            }
+            finally {
+                if ($null -eq $originalFoo) {
+                    Remove-Item -Path Env:FOO -ErrorAction SilentlyContinue
+                }
+                else {
+                    $env:FOO = $originalFoo
+                }
+            }
+        }
+
+        It 'sets VCPKG_KEEP_ENV_VARS from KeepEnvVars using semicolons' {
+            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @('A', 'B')
+
+            $script:capturedEnvironment.ContainsKey('VCPKG_KEEP_ENV_VARS') | Should -BeTrue
+            $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be 'A;B'
+        }
+
+        It 'prefers KeepEnvVars over Env VCPKG_KEEP_ENV_VARS' {
+            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ VCPKG_KEEP_ENV_VARS = 'X;Y' } -KeepEnvVars @('A', 'B')
+
+            $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be 'A;B'
+        }
+
+        It 'preserves KeepEnvVars entries exactly (no trim, no dedupe)' {
+            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @(' A', 'A', 'B ')
+
+            $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be ' A;A;B '
         }
     }
 }
