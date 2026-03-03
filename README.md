@@ -68,3 +68,23 @@ This module uses [Pester](https://pester.dev/) v5+ for unit testing. To run test
 2.  Run all tests from the module root:
     ```powershell
     Invoke-Pester -Path tests
+    ```
+
+## Running Lint
+
+This repository uses [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) for linting PowerShell sources under `NhcVcpkgTools/`, `tests/`, and `tools/`.
+
+1. Install the linting module:
+   ```powershell
+   Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+   ```
+2. Run lint locally with readable output:
+   ```powershell
+   ./tools/lint.ps1
+   ```
+
+For CI/GitHub Actions usage, run:
+
+```powershell
+./tools/lint.ps1 -Mode github
+```
