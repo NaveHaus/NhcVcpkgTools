@@ -12,6 +12,8 @@ NhcVcpkgTools is a PowerShell module that provides helper functions for interact
 ## Requirements
 
 - PowerShell 7.4+
+- Pester 5.7+ (for testing)
+- PSScriptAnalyzer 1.24+ (for linting)
 
 ## Description
 
