@@ -1,4 +1,5 @@
 ---
+name: nhc-opsx-commit
 description: Commit staged changes
 agent: openspec
 ---
