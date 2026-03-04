@@ -41,7 +41,7 @@ function Test-Executable {
 
     process {
         # Need the full path:
-        $private:full = Resolve-Path -Path $Path -Force -ErrorAction Ignore
+        $private:full = Resolve-Path -Path $Path -ErrorAction Ignore
         if ($null -eq $full) {
             return $false
         }

@@ -55,7 +55,7 @@ function Get-Executable {
                 Write-Error "'$Path' does not exist, is inaccessbile, or is not a directory."
             }
 
-            $private:full = Resolve-Path -Path $Path -Force
+            $private:full = Resolve-Path -Path $Path
             $env:PATH = $full
         }
 

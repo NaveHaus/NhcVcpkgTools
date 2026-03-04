@@ -76,7 +76,7 @@ function Get-BinaryType {
     }
 
     process {
-        $private:full = Resolve-Path -Path $Path -Force -ErrorAction Ignore
+        $private:full = Resolve-Path -Path $Path -ErrorAction Ignore
         $private:type = -1
         [PFWin32Utils.BinaryType]::GetBinaryType($full, [ref] $type) | Out-Null
         return [BinaryType] $type
