@@ -118,7 +118,7 @@ function Get-CommonArguments {
             if (-not (Test-Executable -Path $file)) {
                 Write-Error "The path '$file' is not a valid vcpkg executable."
             }
-            $exe = Resolve-Path -Path $file -Force
+            $exe = Resolve-Path -Path $file
         }
 
         # If $root is undefined but $exe is defined, try to set $root from the parent directory of $exe:
