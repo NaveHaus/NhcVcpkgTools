@@ -149,6 +149,8 @@ function Invoke-LintRunner {
         [string]$RepoRoot
     )
 
+    Import-Module -Name PSScriptAnalyzer -Force
+
     $targetFiles = @(Get-LintTargetFiles -RepoRoot $RepoRoot)
 
     $diagnostics = @()
