@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - '!.opencode/**'
   pull_request:
-    branches: [ main ]
+    paths:
+      - '!.opencode/**'
 
 jobs:
   build:
