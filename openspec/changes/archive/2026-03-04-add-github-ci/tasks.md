@@ -16,5 +16,5 @@
 
 ## 4. Validation
 
-- [ ] 4.1 Validate on a PR that lint findings appear as annotations and that test failures fail the check
-- [ ] 4.2 Validate that the test results artifact is present for both passing and failing test runs
+- [x] 4.1 Validate on a PR that lint findings appear as annotations and that test failures fail the check
+- [x] 4.2 Validate that the test results artifact is present for both passing and failing test runs
