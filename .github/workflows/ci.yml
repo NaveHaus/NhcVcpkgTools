@@ -31,6 +31,7 @@ jobs:
     - name: Run Pester
       shell: pwsh
       run: |
+        Import-Module -Name Pester
         $config = [PesterConfiguration]::Default
         $config.Run.Path = 'tests'
         $config.TestResult.Enabled = $true
