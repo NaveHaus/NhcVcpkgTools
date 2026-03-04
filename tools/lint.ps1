@@ -1,3 +1,6 @@
+#Requires -Version 7.4
+#Requires -Modules PSScriptAnalyzer
+
 [CmdletBinding()]
 param(
     [ValidateSet('local', 'github')]
@@ -148,8 +151,6 @@ function Invoke-LintRunner {
         [Parameter(Mandatory)]
         [string]$RepoRoot
     )
-
-    Import-Module -Name PSScriptAnalyzer -Force
 
     $targetFiles = @(Get-LintTargetFiles -RepoRoot $RepoRoot)
 

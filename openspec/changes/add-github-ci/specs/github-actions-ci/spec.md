@@ -35,7 +35,7 @@ The CI workflow SHALL run Pester unit tests discovered under `tests/` and SHALL 
 - **THEN** the workflow uploads an artifact containing the NUnit XML results file
 
 ### Requirement: CI ensures required PowerShell tooling is available
-The CI workflow SHALL ensure Pester v5+ and PSScriptAnalyzer are available before running tests and lint.
+The CI workflow SHALL ensure Pester v5.7+ and PSScriptAnalyzer v1.24+ are available before running tests and lint.
 
 #### Scenario: Tool installation precedes execution
 - **WHEN** the workflow starts
