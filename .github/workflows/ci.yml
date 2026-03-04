@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Display PowerShell version
+      shell: pwsh
+      run: $PSVersionTable
+
+    - name: Install PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        Set-PSRepository PSGallery -InstallationPolicy Trusted
+        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+
+    - name: Run PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        ./tools/lint.ps1 -Mode github
+
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0 -ErrorAction Stop
+
+    - name: Run Pester
+      shell: pwsh
+      run: |
+        $config = [PesterConfiguration]::Default
+        $config.Run.Path = 'tests'
+        $config.TestResult.Enabled = $true
+        $config.TestResult.OutputFormat = 'NUnitXml'
+        $config.TestResult.OutputPath = 'test-results.xml'
+        Invoke-Pester -Configuration $config
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: test-results.xml
