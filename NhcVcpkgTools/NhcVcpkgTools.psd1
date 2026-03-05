@@ -6,11 +6,13 @@
     GUID                 = 'dedcb851-3924-4abc-8013-c2e895685ca5'
     Author               = 'Demian M. Nave'
     CompanyName          = 'NaveHaus Consulting LLC'
-    Copyright            = '(c) NaveHaus Consulting LLC.'
+    Copyright            = '(c) NaveHaus Consulting LLC. All rights reserved.'
     Description          = 'Tools for working with vcpkg from PowerShell.'
     PowerShellVersion    = '7.4'
     RequiredModules      = @()
     AliasesToExport      = @()
+    CmdletsToExport      = @()
+    DscResourcesToExport = @()
     FunctionsToExport    = @(
         'Export-NhcVcpkgPorts'
         'Install-NhcVcpkgPorts'
@@ -24,13 +26,13 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            # Tags = @()
+            Tags = @('vcpkg', 'package-management')
 
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/NaveHaus/NhcVcpkgTools/blob/master/LICENSE'
 
             # A URL to the main website for this project.
-            # ProjectUri = ''
+            ProjectUri = 'https://github.com/NaveHaus/NhcVcpkgTools'
 
             # A URL to an icon representing this module.
             # IconUri = ''

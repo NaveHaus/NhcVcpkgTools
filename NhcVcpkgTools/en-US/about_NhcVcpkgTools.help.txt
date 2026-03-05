@@ -1,0 +1,20 @@
+TOPIC
+    about_NhcVcpkgTools
+
+SHORT DESCRIPTION
+    Tools for working with vcpkg from PowerShell.
+
+LONG DESCRIPTION
+    Tools for working with vcpkg from PowerShell.
+
+NOTE:
+    Thank you to all those who contributed to this module, by writing code, sharing opinions, and provided feedback.
+
+TROUBLESHOOTING NOTE:
+    Please see the GitHub project for issues and new releases.
+
+SEE ALSO
+    - https://github.com/NaveHaus/NhcVcpkgTools
+
+KEYWORDS
+     vcpkg, package-management
