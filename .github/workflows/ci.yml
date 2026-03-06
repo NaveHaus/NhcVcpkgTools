@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  test:
+  build-and-test:
     permissions:
       checks: write
     runs-on: windows-latest
@@ -21,23 +21,20 @@ jobs:
       shell: pwsh
       run: $PSVersionTable
 
-    - name: Install Required Modules
+    - name: Resolve Dependencies
       shell: pwsh
       run: |
-        Set-PSRepository PSGallery -InstallationPolicy Trusted
-        Install-Module -Name Pester -Force -Scope CurrentUser -MinimumVersion 5.7.0 -ErrorAction Stop
-        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -MinimumVersion 1.24.0 -ErrorAction Stop
+        ./build.ps1 -ResolveDependency -Tasks noop
 
-    - name: Run Pester
+    - name: Build NhcVcpkgTools
       shell: pwsh
       run: |
-        Import-Module -Name Pester
-        $config = [PesterConfiguration]::Default
-        $config.Run.Path = 'tests'
-        $config.TestResult.Enabled = $true
-        $config.TestResult.OutputFormat = 'NUnitXml'
-        $config.TestResult.OutputPath = 'test-results.xml'
-        Invoke-Pester -Configuration $config
+        ./build.ps1 -Tasks build
+
+    - name: Execute Tests
+      shell: pwsh
+      run: |
+        ./build.ps1 -Tasks test
 
     - name: Run PSScriptAnalyzer
       shell: pwsh
@@ -46,7 +43,7 @@ jobs:
 
     - name: Upload Test Results
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: test-results
-        path: test-results.xml
+        path: output/testResults/NUnitXml_NhcVcpkgTools_*

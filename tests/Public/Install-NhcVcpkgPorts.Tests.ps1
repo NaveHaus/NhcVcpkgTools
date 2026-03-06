@@ -27,10 +27,7 @@ Describe 'Install-NhcVcpkgPorts' {
         $script:triplet = 'x64-windows'
         $script:rootInfo = New-TestVcpkgRoot
 
-        InModuleScope -ScriptBlock {
-            Mock Test-Executable { return $true }
-        }
-
+        Mock Test-Executable -ModuleName $script:moduleName { return $true }
         Mock Start-Process {
             param(
                 [string]$FilePath,
