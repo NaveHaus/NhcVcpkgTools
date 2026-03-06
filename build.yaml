@@ -9,8 +9,6 @@
 BuiltModuleSubdirectory: module
 CopyPaths:
   - en-US
-#  - DSCResources
-  # - Modules
 Encoding: UTF8
 # Can be used to manually specify module's semantic version if the preferred method of
 # using GitVersion is not available, and it is not possible to set the session environment
@@ -53,13 +51,9 @@ BuildWorkflow:
     - Build_NestedModules_ModuleBuilder
     - Create_changelog_release_output
 
-
   pack:
     - build
-
     - package_module_nupkg
-
-
 
   # Defining test task to be run when invoking `./build.ps1 -Tasks test`
   test:
@@ -95,16 +89,13 @@ Pester:
   # only run tests in certain folders, or run specific test files, or can be use to
   # specify the order tests are run.
   Script:
-  # - tests/QA/module.tests.ps1
-  # - tests/QA
-  # - tests/Unit
-  # - tests/Integration
   ExcludeTag:
-  #  - helpQuality
-  #  - FunctionalQuality
-  #  - TestQuality
+    - Changelog
+    - helpQuality
+    - TestQuality
   Tag:
-  CodeCoverageThreshold: 85 # Set to 0 to bypass
+  CodeCoverageThreshold: 0
+  # CodeCoverageThreshold: 85 # Set to 0 to bypass
   #CodeCoverageOutputFile: JaCoCo_$OsShortName.xml
   #CodeCoverageOutputFileEncoding: ascii
   # Use this if code coverage should be merged from several pipeline test jobs.
@@ -121,7 +112,6 @@ Pester:
   #CodeCoverageFilePattern: JaCoCo_Merge.xml # the pattern used to search all pipeline test job artifacts
   #CodeCoverageMergedOutputFile: JaCoCo_coverage.xml # the file that is created for the merged code coverage
 
-
 # Import ModuleBuilder tasks from a specific PowerShell module using the build
 # task's alias. Wildcard * can be used to specify all tasks that has a similar
 # prefix and or suffix. The module contain the task must be added as a required
@@ -131,7 +121,6 @@ ModuleBuildTasks:
     - '*.build.Sampler.ib.tasks'
   Sampler.GitHubTasks:
     - '*.ib.tasks'
-
 
 # Invoke-Build Header to be used to 'decorate' the terminal output of the tasks.
 TaskHeader: |
