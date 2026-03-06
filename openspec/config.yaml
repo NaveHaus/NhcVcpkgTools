@@ -1,25 +1,22 @@
 schema: spec-driven
 
 context: |
-  Tech stack: PowerShell 7+, Pester 5+, GitHub Flavored Markdown
+  Refer to the project root AGENTS.md if not already part of the context.
 
-  - **IMPORTANT**: Test-driven development (TDD) is required for all code additions or modifications
-  - **IMPORTANT**: Pester tests are required to validate all changes or additions to PowerShell code
-
-# Per-artifact rules (optional)
 rules:
   proposal:
-    - Formulate proposals around test-driven development
+    - Formulate proposals around a TDD red/green/refactor process
     - Require implementing new tests when adding code
     - Require updating existing tests when changing code
     - Suggest implementing new tests when changing code that is untested
-    - Keep proposals under 1000 words
+    - Keep proposals under 2000 words
   specs:
-    - Formulate specs around test-driven development
+    - Formulate specs around a TDD red/green/refactor process
     - Be explicit about HOW a requirement must be met not just WHAT  must be met
   design:
-    - Formulate design goals around test-driven development
+    - Formulate designs around a test-driven red/green/refactor process
   tasks:
     - Break tasks into chunks of up to 2 hours of effort
-    - Create a test to verify new code
-    - Update existing tests to verify code modifications
+    - Formulate tasks involving testing/validation around a TDD red/green/refactor process
+    - Ensure all new code is validated by tasks that create new Unit tests
+    - Ensure all changed code is validated by tasks that update relevant existing Unit and/or Integration tests
