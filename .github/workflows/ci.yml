@@ -36,14 +36,23 @@ jobs:
       run: |
         ./build.ps1 -Tasks test
 
-    - name: Run PSScriptAnalyzer
-      shell: pwsh
-      run: |
-        ./tools/lint.ps1 -Mode github
-
     - name: Upload Test Results
       if: ${{ always() }}
       uses: actions/upload-artifact@v6
       with:
         name: test-results
         path: output/testResults/NUnitXml_NhcVcpkgTools_*
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Display PowerShell version
+      shell: pwsh
+      run: $PSVersionTable
+
+    - name: Run PSScriptAnalyzer
+      shell: pwsh
+      run: |
+        ./tools/lint.ps1 -Mode github
