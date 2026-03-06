@@ -1,9 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\Test-FileNameString.ps1
-. $PSScriptRoot\Test-PathString.ps1
-. $PSScriptRoot\Get-BinaryType.ps1
-
 function Test-Executable {
     <#
     .SYNOPSIS

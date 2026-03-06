@@ -1,13 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\ConvertTo-NormalizedPath.ps1
-. $PSScriptRoot\Get-Executable.ps1
-. $PSScriptRoot\Get-DefaultTriplet.ps1
-. $PSScriptRoot\Join-RelativePath.ps1
-. $PSScriptRoot\Test-AbsolutePath.ps1
-. $PSScriptRoot\Test-Executable.ps1
-. $PSScriptRoot\Test-VcpkgRoot.ps1
-
 function Get-CommonArguments {
     <#
     .SYNOPSIS

@@ -1,8 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\Test-FileNameString.ps1
-. $PSScriptRoot\Test-PathString.ps1
-
 function Get-Executable {
     <#
     .SYNOPSIS

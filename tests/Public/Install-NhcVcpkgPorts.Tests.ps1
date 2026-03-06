@@ -1,7 +1,14 @@
+BeforeAll {
+    . "$PSScriptRoot/../Shared/Bootstrap-NhcVcpkgTools.ps1"
+    Enter-NhcVcpkgToolsTest
+}
+
+AfterAll {
+    Exit-NhcVcpkgToolsTest
+}
+
 Describe 'Install-NhcVcpkgPorts' {
     BeforeAll {
-        . "$PSScriptRoot/../../NhcVcpkgTools/Public/Install-NhcVcpkgPorts.ps1"
-
         function New-TestVcpkgRoot {
             $rootDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
             New-Item -Path $rootDir -ItemType Directory | Out-Null
@@ -20,7 +27,10 @@ Describe 'Install-NhcVcpkgPorts' {
         $script:triplet = 'x64-windows'
         $script:rootInfo = New-TestVcpkgRoot
 
-        Mock Test-Executable { return $true }
+        InModuleScope -ScriptBlock {
+            Mock Test-Executable { return $true }
+        }
+
         Mock Start-Process {
             param(
                 [string]$FilePath,
@@ -33,7 +43,7 @@ Describe 'Install-NhcVcpkgPorts' {
             )
 
             $script:capturedCommand = $FilePath
-            $script:capturedArguments = $ArgumentList
+            $script:capturedArguments = $ArgumentList + @($NoNewWindow,$Wait,$WhatIf,$Confirm)
             $script:capturedEnvironment = $Environment
             return $null
         }
@@ -43,7 +53,7 @@ Describe 'Install-NhcVcpkgPorts' {
         It 'builds classic arguments with root and triplet' {
             $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
-            $expectedRoot = ConvertTo-NormalizedPath -Path $script:rootInfo.RootDir
+            $expectedRoot = (Resolve-Path -Path $script:rootInfo.RootDir).ProviderPath
             $script:capturedArguments | Should -Contain 'install'
             $script:capturedArguments | Should -Contain 'zlib'
             $script:capturedArguments | Should -Contain '--classic'
@@ -68,19 +78,19 @@ Describe 'Install-NhcVcpkgPorts' {
             New-Item -Path $outputDir -ItemType Directory | Out-Null
 
             $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $outputDir -Tag 'release' |
-                Where-Object { $_ -is [hashtable] } |
-                Select-Object -Last 1
+            Where-Object { $_ -is [hashtable] } |
+            Select-Object -Last 1
 
-            $expectedBase = ConvertTo-NormalizedPath -Path $outputDir
-            $expectedParent = ConvertTo-NormalizedPath -Path (Join-Path $outputDir 'release')
+            $expectedBase = $outputDir
+            $expectedParent = Join-Path $outputDir 'release'
 
             $result.BaseDir.Path | Should -Be $expectedBase
             $result.Tag | Should -Be 'release'
             $result.ParentDir.Path | Should -Be $expectedParent
-            $result.DownloadDir.Path | Should -Be (ConvertTo-NormalizedPath -Path (Join-Path $expectedParent 'downloads'))
-            $result.BuildDir.Path | Should -Be (ConvertTo-NormalizedPath -Path (Join-Path $expectedParent 'buildtrees'))
-            $result.PackageDir.Path | Should -Be (ConvertTo-NormalizedPath -Path (Join-Path $expectedParent 'packages'))
-            $result.InstallDir.Path | Should -Be (ConvertTo-NormalizedPath -Path (Join-Path $expectedParent 'installed'))
+            $result.DownloadDir.Path | Should -Be (Join-Path $expectedParent 'downloads')
+            $result.BuildDir.Path | Should -Be (Join-Path $expectedParent 'buildtrees')
+            $result.PackageDir.Path | Should -Be (Join-Path $expectedParent 'packages')
+            $result.InstallDir.Path | Should -Be (Join-Path $expectedParent 'installed')
         }
     }
 

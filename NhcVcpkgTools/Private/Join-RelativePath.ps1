@@ -1,9 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\Test-AbsolutePath.ps1
-. $PSScriptRoot\Test-PathString.ps1
-. $PSScriptRoot\Test-FileNameString.ps1
-
 function Join-RelativePath {
     <#
     .SYNOPSIS

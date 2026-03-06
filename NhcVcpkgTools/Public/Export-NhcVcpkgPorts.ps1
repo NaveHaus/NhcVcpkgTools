@@ -1,10 +1,4 @@
-#Requires -Version 7.4
-
 Set-StrictMode -Version 3.0
-
-. $PSScriptRoot\..\private\Get-CommonArguments.ps1
-. $PSScriptRoot\..\private\Get-TaggedOutputDir.ps1
-. $PSScriptRoot\..\private\Test-EmptyDirectory.ps1
 
 # Valid export formats. This is exported from the module so that it can be accessed from ArgumentCompleter:
 $g_NhcVcpkgValidExportFormats = @( "zip", "7zip", "nuget" )
