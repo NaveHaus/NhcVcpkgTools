@@ -1,10 +1,4 @@
-#Requires -Version 7.4
-
 Set-StrictMode -Version 3.0
-
-. $PSScriptRoot\..\private\ConvertTo-NormalizedPath.ps1
-. $PSScriptRoot\..\private\Get-CommonArguments.ps1
-. $PSScriptRoot\..\private\Get-TaggedOutputDir.ps1
 
 function Install-NhcVcpkgPorts {
     <#

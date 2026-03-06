@@ -1,10 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\ConvertTo-NormalizedPath.ps1
-. $PSScriptRoot\Get-PathInfo.ps1
-. $PSScriptRoot\Join-RelativePath.ps1
-. $PSScriptRoot\Test-PathString.ps1
-
 function Get-TaggedOutputDir {
     <#
     .SYNOPSIS

@@ -1,7 +1,5 @@
 Set-StrictMode -Version 3.0
 
-. $PSScriptRoot\Join-RelativePath.ps1
-
 function ConvertTo-NormalizedPath {
     <#
     .SYNOPSIS
