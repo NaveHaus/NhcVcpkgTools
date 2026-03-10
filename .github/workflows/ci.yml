@@ -39,7 +39,7 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v6
       with:
-        name: test-results
+        name: import-and-test-results
         path: ./NUnitXml_NhcVcpkgTools_test_results.xml
 
   build-and-test:
@@ -73,7 +73,7 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v6
       with:
-        name: test-results
+        name: build-and-test-results
         path: output/testResults/NUnitXml_NhcVcpkgTools_*
 
   lint:
