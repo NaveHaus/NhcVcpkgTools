@@ -8,6 +8,7 @@ $private:Root = $PSScriptRoot
 
 $private:PrivateFunctions = @(
     'ConvertTo-NormalizedPath'
+    'Get-BinaryType'
     'Get-CommonArguments'
     'Get-DefaultTriplet'
     'Get-Executable'
