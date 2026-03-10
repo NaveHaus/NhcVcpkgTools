@@ -1,4 +1,5 @@
 BeforeAll {
+    $VerbosePreference = 'Continue'
     . "$PSScriptRoot/Bootstrap-NhcVcpkgTools.ps1"
 }
 
@@ -20,8 +21,9 @@ Describe 'Bootstrap-NhcVcpkgTools helper functions' -Tags 'bootstrap' {
         $result = Enter-NhcVcpkgToolsTest
         $result.Name | Should -Be 'NhcVcpkgTools'
 
-        Should -Invoke Get-Module -Times 1 -ParameterFilter { $Name -eq 'NhcVcpkgTools' -and $ListAvailable }
-        Should -Invoke Import-Module -Times 1
+        Should -Invoke Get-Module -Times 1 -ParameterFilter { $Name -eq 'NhcVcpkgTools' }
+        Should -Invoke Get-Module -Times 0 -ParameterFilter { $Name -eq 'NhcVcpkgTools' -and $ListAvailable }
+        Should -Invoke Import-Module -Times 0
         Should -Invoke Set-ModuleUnderTest -Times 1
     }
 
@@ -39,9 +41,10 @@ Describe 'Bootstrap-NhcVcpkgTools helper functions' -Tags 'bootstrap' {
         Mock Set-ModuleUnderTest {}
         Mock Remove-ModuleUnderTest { throw 'Should not clean up' }
 
-        Enter-NhcVcpkgToolsTest -SkipImport | Out-Null
+        Enter-NhcVcpkgToolsTest | Out-Null
 
         Should -Invoke Import-Module -Times 1 -ParameterFilter { $Name -eq 'NhcVcpkgTools' }
+        Should -Invoke Get-Module -Times 1 -ParameterFilter { $Name -eq 'NhcVcpkgTools' -and -not $ListAvailable }
         Should -Invoke Invoke-BootstrapBuild -Times 1
     }
 
@@ -51,7 +54,6 @@ Describe 'Bootstrap-NhcVcpkgTools helper functions' -Tags 'bootstrap' {
 
         Enter-NhcVcpkgToolsTest | Out-Null
 
-        Get-Module -Name 'NhcVcpkgTools' | Should -Be $null
         'InModuleScope:ModuleName', 'Mock:ModuleName', 'Should:ModuleName' |
         ForEach-Object {
             $PSDefaultParameterValues[$_] | Should -Be 'NhcVcpkgTools'

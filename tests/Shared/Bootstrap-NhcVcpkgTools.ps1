@@ -39,13 +39,20 @@ function Remove-ModuleUnderTest {
 function Enter-NhcVcpkgToolsTest {
     $script:moduleName = 'NhcVcpkgTools'
 
-    # If the module is not found, run the build task 'noop'.
-    if (-not (Get-Module -Name $script:moduleName -ListAvailable)) {
-        Invoke-BootstrapBuild
+    if (Get-Module -Name $script:moduleName) {
+        $script:g_moduleWasPreLoaded = $true
     }
 
-    # Re-import the module using force to get any code changes between runs.
-    Import-Module -Name $script:moduleName -Force -ErrorAction 'Stop'
+    # If the module is not found, run the build task 'noop'.
+    else {
+        if (-not (Get-Module -Name $script:moduleName -ListAvailable)) {
+            Invoke-BootstrapBuild
+            $script:g_moduleWasPreLoaded = $false
+        }
+
+        # Re-import the module using force to get any code changes between runs.
+        Import-Module -Name $script:moduleName -Force -ErrorAction 'Stop'
+    }
 
     # Setup module-specific testing:
     Set-ModuleUnderTest -Name $script:moduleName
@@ -55,5 +62,7 @@ function Enter-NhcVcpkgToolsTest {
 
 function Exit-NhcVcpkgToolsTest {
     Remove-ModuleUnderTest -Name $script:moduleName
-    Remove-Module -Name $script:moduleName -ErrorAction SilentlyContinue
+    if (-not $script:g_moduleWasPreLoaded) {
+        Remove-Module -Name $script:moduleName -ErrorAction SilentlyContinue
+    }
 }
