@@ -1,5 +1,7 @@
 Set-StrictMode -Version 3.0
 
+$script:g_moduleWasPreLoaded = $false
+
 function Invoke-BootstrapBuild {
     # Redirect all streams to $null, except the error stream (stream 2)
     & "$PSScriptRoot/../../build.ps1" -Tasks 'noop' 2>&1 4>&1 5>&1 6>&1 > $null
@@ -65,4 +67,5 @@ function Exit-NhcVcpkgToolsTest {
     if (-not $script:g_moduleWasPreLoaded) {
         Remove-Module -Name $script:moduleName -ErrorAction SilentlyContinue
     }
+    $script:g_moduleWasPreLoaded = $false
 }
