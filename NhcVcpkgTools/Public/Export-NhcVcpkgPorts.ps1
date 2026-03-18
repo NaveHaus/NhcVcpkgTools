@@ -286,21 +286,22 @@ function Export-NhcVcpkgPorts {
             $params += "--dry-run"
         }
 
-        if ($Quiet) {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
-            $private:status = $?
+        try {
+            if ($Quiet) {
+                Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false 2>&1 | Out-Null
+                $private:status = $?
+            }
+            else {
+                Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
+                $private:status = $?
+            }
         }
-        else {
-            Start-Process -FilePath $exe -ArgumentList $params -NoNewWindow -Wait -WhatIf:$false -Confirm:$false
-            $private:status = $?
+        catch {
+            # vcpkg execution failed - set Status to false without rethrowing
+            $private:status = $false
         }
 
-        if (0 -eq $status) {
-            $config.Status = $true
-        }
-        else {
-            $config.Status = $false
-        }
+        $config.Status = $status
 
         # Try to clean up after --dry-run:
         if ($WhatIfPreference) {

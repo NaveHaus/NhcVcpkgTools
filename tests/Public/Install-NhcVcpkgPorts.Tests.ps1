@@ -42,7 +42,7 @@ Describe 'Install-NhcVcpkgPorts' {
             $script:capturedCommand = $FilePath
             $script:capturedArguments = $ArgumentList + @($NoNewWindow,$Wait,$WhatIf,$Confirm)
             $script:capturedEnvironment = $Environment
-            return $null
+            # Important: do not return anything from this mock.
         }
     }
 
