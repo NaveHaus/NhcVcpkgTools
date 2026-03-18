@@ -75,4 +75,64 @@ Describe 'Get-CommonArguments' {
             }
         }
     }
+
+    Context 'Outdated Parameter' {
+        It 'should include --outdated flag when Outdated key is present and truthy' {
+            InModuleScope -ScriptBlock {
+                $params = @{ Outdated = $true; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
+                $result = Get-CommonArguments -Parameters $params
+                $result.Arguments | Should -Contain '--outdated'
+            }
+        }
+
+        It 'should NOT include --outdated flag when Outdated key is not present' {
+            InModuleScope -ScriptBlock {
+                $params = @{ RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
+                $result = Get-CommonArguments -Parameters $params
+                $result.Arguments | Should -Not -Contain '--outdated'
+            }
+        }
+    }
+
+    Context 'Recurse Parameter' {
+        It 'should include --recurse flag when Recurse key is present and truthy' {
+            InModuleScope -ScriptBlock {
+                $params = @{ Recurse = $true; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
+                $result = Get-CommonArguments -Parameters $params
+                $result.Arguments | Should -Contain '--recurse'
+            }
+        }
+
+        It 'should NOT include --recurse flag when Recurse key is not present' {
+            InModuleScope -ScriptBlock {
+                $params = @{ RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
+                $result = Get-CommonArguments -Parameters $params
+                $result.Arguments | Should -Not -Contain '--recurse'
+            }
+        }
+    }
+
+    Context 'String Path Returns' {
+        It 'should return all Path values as strings in the result hashtable' {
+            InModuleScope -ScriptBlock {
+                $rootDir = (Get-Location).ProviderPath
+                $params = @{
+                    RootDir = $rootDir
+                    Command = 'vcpkg.exe'
+                }
+                $result = Get-CommonArguments -Parameters $params
+                
+                # Verify Command and RootDir are strings
+                $result.Command | Should -BeOfType [string]
+                $result.RootDir | Should -BeOfType [string]
+                
+                # Verify all directory Path values are strings
+                $result.ParentDir.Path | Should -BeOfType [string]
+                $result.DownloadDir.Path | Should -BeOfType [string]
+                $result.BuildDir.Path | Should -BeOfType [string]
+                $result.PackageDir.Path | Should -BeOfType [string]
+                $result.InstallDir.Path | Should -BeOfType [string]
+            }
+        }
+    }
 }

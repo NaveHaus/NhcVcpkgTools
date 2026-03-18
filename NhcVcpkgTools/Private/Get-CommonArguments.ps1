@@ -23,6 +23,8 @@ function Get-CommonArguments {
     - Command (specify the vcpkg executable)
     - Ports (enables --classic)
     - All (enabled --feature-flags=manifest,versions)
+    - Outdated (enables --outdated)
+    - Recurse (enables --recurse)
     - RootDir (--vcpkg-root)
     - Triplet (--triplet)
     - OverlayPorts (--overlay-ports[])
@@ -72,6 +74,7 @@ function Get-CommonArguments {
     #>
 
     [CmdletBinding(DefaultParameterSetName = "Parameters", PositionalBinding = $false)]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [hashtable]$Parameters,
@@ -164,6 +167,16 @@ function Get-CommonArguments {
             $params += "--feature-flags=`"manifest,versions`""
         }
 
+        # Add --outdated flag if Outdated parameter is present and truthy:
+        if ($Parameters.ContainsKey("Outdated") -and $Parameters.Outdated) {
+            $params += "--outdated"
+        }
+
+        # Add --recurse flag if Recurse parameter is present and truthy:
+        if ($Parameters.ContainsKey("Recurse") -and $Parameters.Recurse) {
+            $params += "--recurse"
+        }
+
         $params += "--vcpkg-root=`"$root`""
 
         $private:triplet = Get-DefaultTriplet -Parameters $Parameters
@@ -229,9 +242,9 @@ function Get-CommonArguments {
         }
 
         $result = @{
-            Command   = $exe
-            RootDir   = $root
-            ParentDir = @{ Path = $parent; Exists = (Test-Path -Path $parent -PathType Container) }
+            Command   = "$exe"
+            RootDir   = "$root"
+            ParentDir = @{ Path = "$parent"; Exists = (Test-Path -Path $parent -PathType Container) }
         }
 
         # Setup default output paths:
@@ -240,7 +253,7 @@ function Get-CommonArguments {
             $params += "--downloads-root=`"$DownloadDir`""
             $result += @{
                 DownloadDir = @{
-                    Path   = $DownloadDir
+                    Path   = "$DownloadDir"
                     Exists = (Test-Path -Path $DownloadDir -PathType Container)
                 }
             }
@@ -251,7 +264,7 @@ function Get-CommonArguments {
             $params += "--x-buildtrees-root=`"$BuildDir`""
             $result += @{
                 BuildDir = @{
-                    Path   = $BuildDir
+                    Path   = "$BuildDir"
                     Exists = (Test-Path -Path $BuildDir -PathType Container) 
                 }
             }
@@ -262,7 +275,7 @@ function Get-CommonArguments {
             $params += "--x-packages-root=`"$PackageDir`""
             $result += @{
                 PackageDir = @{
-                    Path   = $PackageDir
+                    Path   = "$PackageDir"
                     Exists = (Test-Path -Path $PackageDir -PathType Container) 
                 } 
             }
@@ -274,7 +287,7 @@ function Get-CommonArguments {
             $params += "--x-install-root=`"$InstallDir`""
             $result += @{
                 InstallDir = @{
-                    Path   = $InstallDir
+                    Path   = "$InstallDir"
                     Exists = (Test-Path -Path $InstallDir -PathType Container) 
                 } 
             }

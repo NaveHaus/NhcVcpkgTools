@@ -16,6 +16,7 @@
     FunctionsToExport    = @(
         'Export-NhcVcpkgPorts'
         'Install-NhcVcpkgPorts'
+        'Remove-NhcVcpkgPorts'
     )
 
     VariablesToExport    = @(

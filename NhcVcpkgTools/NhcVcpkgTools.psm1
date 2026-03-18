@@ -25,6 +25,7 @@ $private:PrivateFunctions = @(
 $private:PublicFunctions = @(
     'Export-NhcVcpkgPorts'
     'Install-NhcVcpkgPorts'
+    'Remove-NhcVcpkgPorts'
 )
 
 $private:PublicVariables = @(
