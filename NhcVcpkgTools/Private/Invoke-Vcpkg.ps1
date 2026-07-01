@@ -23,7 +23,9 @@ function Invoke-Vcpkg {
     When omitted, the child inherits the current process environment.
 
     .PARAMETER Quiet
-    Suppresses the Start-Process error stream so vcpkg runs silently.
+    Suppresses non-terminating errors emitted by the Start-Process cmdlet
+    invocation. Note this does not redirect the child vcpkg process's own
+    console output, which is inherited directly because -NoNewWindow is used.
 
     .EXAMPLE
     Invoke-Vcpkg -Command 'vcpkg' -Arguments @('install', 'zlib')

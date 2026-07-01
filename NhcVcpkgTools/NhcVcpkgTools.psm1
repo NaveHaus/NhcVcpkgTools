@@ -14,6 +14,7 @@ $private:PrivateFunctions = @(
     'Get-Executable'
     'Get-PathInfo'
     'Get-TaggedOutputDir'
+    'Invoke-Vcpkg'
     'Join-RelativePath'
     'Test-AbsolutePath'
     'Test-Executable'
