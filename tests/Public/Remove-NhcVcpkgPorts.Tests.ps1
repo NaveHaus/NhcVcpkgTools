@@ -39,7 +39,7 @@ Describe 'Remove-NhcVcpkgPorts' {
 
             $script:capturedCommand = $FilePath
             $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $WhatIf, $Confirm)
-            # Important: do not return anything from this mock.
+            return [pscustomobject]@{ ExitCode = 0 }
         }
     }
 
@@ -283,6 +283,24 @@ Describe 'Remove-NhcVcpkgPorts' {
             $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -ErrorAction SilentlyContinue
 
             $result.Status | Should -BeFalse
+        }
+    }
+
+    Context 'vcpkg exit status' {
+        It 'returns Status false when vcpkg exits non-zero' {
+            Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 1 } }
+
+            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+        }
+
+        It 'returns Status true when vcpkg exits zero' {
+            Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 0 } }
+
+            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeTrue
         }
     }
 }
