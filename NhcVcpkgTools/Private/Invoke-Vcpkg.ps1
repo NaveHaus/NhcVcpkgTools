@@ -11,6 +11,24 @@ function Invoke-Vcpkg {
     non-zero exit code or if the process fails to launch. ErrorAction 'Stop'
     on Start-Process ensures a launch failure surfaces as a terminating error
     caught here, independent of the caller's $ErrorActionPreference.
+
+    .PARAMETER Command
+    Path to the vcpkg executable to run.
+
+    .PARAMETER Arguments
+    The argument list passed to vcpkg (e.g. the verb plus its options).
+
+    .PARAMETER Environment
+    Optional hashtable of environment variables to set for the child process.
+    When omitted, the child inherits the current process environment.
+
+    .PARAMETER Quiet
+    Suppresses the Start-Process error stream so vcpkg runs silently.
+
+    .EXAMPLE
+    Invoke-Vcpkg -Command 'vcpkg' -Arguments @('install', 'zlib')
+
+    Runs 'vcpkg install zlib' and returns $true only if vcpkg exits with code 0.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
