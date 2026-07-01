@@ -11,6 +11,7 @@ function Invoke-BootstrapBuild {
 }
 
 function Set-ModuleUnderTest {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test bootstrap helper, not a user-facing cmdlet')]
     [CmdletBinding()]
     param(
         [string]$Name
@@ -23,6 +24,7 @@ function Set-ModuleUnderTest {
 }
 
 function Remove-ModuleUnderTest {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test bootstrap helper, not a user-facing cmdlet')]
     [CmdletBinding()]
     param(
         [string]$Name

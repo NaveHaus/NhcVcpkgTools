@@ -39,8 +39,9 @@ function Resolve-RepoRelativePath {
     return $Path.Replace('\', '/')
 }
 
-function Get-LintTargetFiles {
+function Get-LintTargetFile {
     [CmdletBinding()]
+    [OutputType([string[]])]
     param(
         [Parameter(Mandatory)]
         [string]$RepoRoot
@@ -70,11 +71,12 @@ function Get-LintTargetFiles {
         }
     }
 
-    return @($collected | Sort-Object -Unique)
+    return [string[]]@($collected | Sort-Object -Unique)
 }
 
 function Format-GitHubAnnotation {
     [CmdletBinding()]
+    [OutputType([string])]
     param(
         [Parameter(Mandatory)]
         [psobject]$Diagnostic,
@@ -114,6 +116,7 @@ function Format-GitHubAnnotation {
 
 function Format-LocalDiagnostic {
     [CmdletBinding()]
+    [OutputType([string])]
     param(
         [Parameter(Mandatory)]
         [psobject]$Diagnostic,
@@ -152,7 +155,7 @@ function Invoke-LintRunner {
         [string]$RepoRoot
     )
 
-    $targetFiles = @(Get-LintTargetFiles -RepoRoot $RepoRoot)
+    $targetFiles = @(Get-LintTargetFile -RepoRoot $RepoRoot)
 
     $diagnostics = @()
     if ($targetFiles.Count -gt 0) {

@@ -21,8 +21,8 @@ This module simplifies common vcpkg tasks by providing a set of functions to man
 
 The following functions are exported by this module:
 
-*   `Install-NhcVcpkgPorts`: Installs one or more vcpkg ports.
-*   `Export-NhcVcpkgPorts`: Exports installed vcpkg ports to a specified format.
+*   `Install-NhcVcpkgPort`: Installs one or more vcpkg ports.
+*   `Export-NhcVcpkgPort`: Exports installed vcpkg ports to a specified format.
 
 ## Installation
 
@@ -35,28 +35,28 @@ Import-Module ./NhcVcpkgTools
 
 ## Usage
 
-### Install-NhcVcpkgPorts
+### Install-NhcVcpkgPort
 
 This function installs one or more vcpkg ports for a specified triplet.
 
 ```powershell
 # Example: Install the 'fmt' port for the default triplet
-Install-NhcVcpkgPorts -PortName "fmt"
+Install-NhcVcpkgPort -PortName "fmt"
 
 # Example: Install multiple ports for a specific triplet
-Install-NhcVcpkgPorts -PortName "fmt", "gtest" -Triplet "x64-windows-static"
+Install-NhcVcpkgPort -PortName "fmt", "gtest" -Triplet "x64-windows-static"
 ```
 
-### Export-NhcVcpkgPorts
+### Export-NhcVcpkgPort
 
 This function exports all installed vcpkg ports to a specified format, such as zip or 7zip.
 
 ```powershell
 # Example: Export all installed ports to a zip file
-Export-NhcVcpkgPorts -Format zip
+Export-NhcVcpkgPort -Format zip
 
 # Example: Export all installed ports to a 7z file in a specific directory
-Export-NhcVcpkgPorts -Format 7zip -OutputDir "C:\vcpkg_exports"
+Export-NhcVcpkgPort -Format 7zip -OutputDir "C:\vcpkg_exports"
 ```
 
 ## Running Tests

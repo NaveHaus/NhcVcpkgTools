@@ -33,6 +33,7 @@ function Get-TaggedOutputDir {
     #>
 
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param (
         [AllowEmptyString()]
         [string]$OutputDir,

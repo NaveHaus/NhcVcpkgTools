@@ -1,6 +1,6 @@
 Set-StrictMode -Version 3.0
 
-function Remove-NhcVcpkgPorts {
+function Remove-NhcVcpkgPort {
     <#
     .SYNOPSIS
     Removes installed vcpkg ports.
@@ -43,19 +43,20 @@ function Remove-NhcVcpkgPorts {
     Suppresses confirmation prompts unless -Confirm is explicitly specified.
 
     .EXAMPLE
-    Remove-NhcVcpkgPorts -Ports 'zlib', 'fmt'
+    Remove-NhcVcpkgPort -Ports 'zlib', 'fmt'
     Removes the specified ports.
 
     .EXAMPLE
-    Remove-NhcVcpkgPorts -Outdated
+    Remove-NhcVcpkgPort -Outdated
     Removes all outdated ports.
 
     .EXAMPLE
-    Remove-NhcVcpkgPorts -Ports 'zlib' -Recurse -WhatIf
+    Remove-NhcVcpkgPort -Ports 'zlib' -Recurse -WhatIf
     Shows what would be removed including dependencies without actually removing.
     #>
     [CmdletBinding(DefaultParameterSetName = 'Ports', SupportsShouldProcess = $true)]
     [OutputType([hashtable])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'The WhatIf preview must always reach the console; Write-Information is silent by default.')]
     param(
         [Parameter(ParameterSetName = 'Ports')]
         [ValidateNotNullOrEmpty()]
@@ -108,7 +109,7 @@ function Remove-NhcVcpkgPorts {
 
         # Build the common vcpkg arguments list:
         $private:config = @{}
-        $config += Get-CommonArguments -Parameters $PSBoundParameters -Directories $required
+        $config += Get-CommonArgument -Parameters $PSBoundParameters -Directories $required
 
         $private:exe = $config.Command
         $private:verb = 'remove'
@@ -134,3 +135,5 @@ function Remove-NhcVcpkgPorts {
         return $config
     }
 }
+
+Set-Alias -Name Remove-NhcVcpkgPorts -Value Remove-NhcVcpkgPort

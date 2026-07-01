@@ -7,7 +7,7 @@ AfterAll {
     Exit-NhcVcpkgToolsTest
 }
 
-Describe 'Export-NhcVcpkgPorts' {
+Describe 'Export-NhcVcpkgPort' {
     BeforeAll {
         function New-TestVcpkgRoot {
             [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test helper, not a user-facing cmdlet')]
@@ -37,13 +37,13 @@ Describe 'Export-NhcVcpkgPorts' {
         It 'returns Status false when vcpkg exits non-zero' {
             Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 1 } }
 
-            $result = Export-NhcVcpkgPorts -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
+            $result = Export-NhcVcpkgPort -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
 
             $result.Status | Should -BeFalse
         }
 
         It 'returns Status true when vcpkg exits zero' {
-            $result = Export-NhcVcpkgPorts -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
+            $result = Export-NhcVcpkgPort -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
 
             $result.Status | Should -BeTrue
         }
@@ -51,7 +51,7 @@ Describe 'Export-NhcVcpkgPorts' {
         It 'returns Status false when vcpkg fails to launch' {
             Mock Start-Process -ModuleName $script:moduleName { throw 'launch failed' }
 
-            $result = Export-NhcVcpkgPorts -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
+            $result = Export-NhcVcpkgPort -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
 
             $result.Status | Should -BeFalse
         }

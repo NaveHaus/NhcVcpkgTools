@@ -1,6 +1,6 @@
 Set-StrictMode -Version 3.0
 
-function Get-CommonArguments {
+function Get-CommonArgument {
     <#
     .SYNOPSIS
     Generate an array of common vcpkg command line arguments.
@@ -265,7 +265,7 @@ function Get-CommonArguments {
             $result += @{
                 BuildDir = @{
                     Path   = "$BuildDir"
-                    Exists = (Test-Path -Path $BuildDir -PathType Container) 
+                    Exists = (Test-Path -Path $BuildDir -PathType Container)
                 }
             }
         }
@@ -276,8 +276,8 @@ function Get-CommonArguments {
             $result += @{
                 PackageDir = @{
                     Path   = "$PackageDir"
-                    Exists = (Test-Path -Path $PackageDir -PathType Container) 
-                } 
+                    Exists = (Test-Path -Path $PackageDir -PathType Container)
+                }
             }
         }
 
@@ -288,8 +288,8 @@ function Get-CommonArguments {
             $result += @{
                 InstallDir = @{
                     Path   = "$InstallDir"
-                    Exists = (Test-Path -Path $InstallDir -PathType Container) 
-                } 
+                    Exists = (Test-Path -Path $InstallDir -PathType Container)
+                }
             }
         }
 

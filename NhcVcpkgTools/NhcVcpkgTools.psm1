@@ -9,7 +9,7 @@ $private:Root = $PSScriptRoot
 $private:PrivateFunctions = @(
     'ConvertTo-NormalizedPath'
     'Get-BinaryType'
-    'Get-CommonArguments'
+    'Get-CommonArgument'
     'Get-DefaultTriplet'
     'Get-Executable'
     'Get-PathInfo'
@@ -24,13 +24,21 @@ $private:PrivateFunctions = @(
 )
 
 $private:PublicFunctions = @(
-    'Export-NhcVcpkgPorts'
-    'Install-NhcVcpkgPorts'
-    'Remove-NhcVcpkgPorts'
+    'Export-NhcVcpkgPort'
+    'Install-NhcVcpkgPort'
+    'Remove-NhcVcpkgPort'
 )
 
 $private:PublicVariables = @(
     'g_NhcVcpkgValidExportFormats'
+)
+
+# Legacy plural aliases retained for backward compatibility. The Set-Alias
+# statements live in the corresponding Public function files.
+$private:PublicAliases = @(
+    'Export-NhcVcpkgPorts'
+    'Install-NhcVcpkgPorts'
+    'Remove-NhcVcpkgPorts'
 )
 
 $PrivateFunctions | ForEach-Object {
@@ -46,3 +54,4 @@ $PublicFunctions | ForEach-Object {
 # Only export public functions:
 Export-ModuleMember -Function $PublicFunctions
 Export-ModuleMember -Variable $PublicVariables
+Export-ModuleMember -Alias $PublicAliases

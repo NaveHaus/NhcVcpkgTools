@@ -8,7 +8,7 @@ Describe 'lint runner' {
             $repoRoot = Join-Path -Path $TestDrive -ChildPath 'repo'
             $diagnosticPath = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/Public/Test.ps1'
 
-            Mock Get-LintTargetFiles {
+            Mock Get-LintTargetFile {
                 $diagnosticPath
             }
 
@@ -34,7 +34,7 @@ Describe 'lint runner' {
 
     Context 'exit code policy' {
         It 'returns non-zero when warnings or errors exist' {
-            Mock Get-LintTargetFiles {
+            Mock Get-LintTargetFile {
                 'NhcVcpkgTools/Public/Test.ps1'
             }
 
@@ -57,7 +57,7 @@ Describe 'lint runner' {
         }
 
         It 'returns zero when there are no findings' {
-            Mock Get-LintTargetFiles {
+            Mock Get-LintTargetFile {
                 'NhcVcpkgTools/Public/Test.ps1'
             }
 
@@ -75,7 +75,7 @@ Describe 'lint runner' {
         It 'includes only targeted directories and extensions' {
             $repoRoot = Join-Path -Path $TestDrive -ChildPath 'repo'
 
-            $targetModuleFile = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/Public/Export-NhcVcpkgPorts.ps1'
+            $targetModuleFile = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/Public/Export-NhcVcpkgPort.ps1'
             $targetModuleManifest = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/NhcVcpkgTools.psd1'
             $targetTestFile = Join-Path -Path $repoRoot -ChildPath 'tests/Private/Get-Executable.Tests.ps1'
             $targetToolFile = Join-Path -Path $repoRoot -ChildPath 'tools/lint.ps1'
@@ -96,7 +96,7 @@ Describe 'lint runner' {
                 $null = New-Item -Path $file -ItemType File -Force
             }
 
-            $files = Get-LintTargetFiles -RepoRoot $repoRoot
+            $files = Get-LintTargetFile -RepoRoot $repoRoot
 
             $files | Should -Contain $targetModuleFile
             $files | Should -Contain $targetModuleManifest
@@ -111,11 +111,11 @@ Describe 'lint runner' {
     Context 'repo-relative path normalization' {
         It 'normalizes paths inside the repository to repo-relative form' {
             $repoRoot = Join-Path -Path $TestDrive -ChildPath 'repo'
-            $absolutePath = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/Public/Export-NhcVcpkgPorts.ps1'
+            $absolutePath = Join-Path -Path $repoRoot -ChildPath 'NhcVcpkgTools/Public/Export-NhcVcpkgPort.ps1'
 
             $relative = Resolve-RepoRelativePath -Path $absolutePath -RepoRoot $repoRoot
 
-            $relative | Should -Be 'NhcVcpkgTools/Public/Export-NhcVcpkgPorts.ps1'
+            $relative | Should -Be 'NhcVcpkgTools/Public/Export-NhcVcpkgPort.ps1'
         }
     }
 
@@ -142,7 +142,7 @@ Describe 'lint runner' {
             $repoRoot = Join-Path -Path $TestDrive -ChildPath 'repo'
             $diagnosticPath = Join-Path -Path $repoRoot -ChildPath 'tools/lint.ps1'
 
-            Mock Get-LintTargetFiles {
+            Mock Get-LintTargetFile {
                 $diagnosticPath
             }
 

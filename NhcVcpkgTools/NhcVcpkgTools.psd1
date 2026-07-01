@@ -10,13 +10,17 @@
     Description          = 'Tools for working with vcpkg from PowerShell.'
     PowerShellVersion    = '7.4'
     RequiredModules      = @()
-    AliasesToExport      = @()
-    CmdletsToExport      = @()
-    DscResourcesToExport = @()
-    FunctionsToExport    = @(
+    AliasesToExport      = @(
         'Export-NhcVcpkgPorts'
         'Install-NhcVcpkgPorts'
         'Remove-NhcVcpkgPorts'
+    )
+    CmdletsToExport      = @()
+    DscResourcesToExport = @()
+    FunctionsToExport    = @(
+        'Export-NhcVcpkgPort'
+        'Install-NhcVcpkgPort'
+        'Remove-NhcVcpkgPort'
     )
 
     VariablesToExport    = @(

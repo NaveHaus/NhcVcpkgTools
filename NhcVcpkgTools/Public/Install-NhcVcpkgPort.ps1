@@ -1,6 +1,6 @@
 Set-StrictMode -Version 3.0
 
-function Install-NhcVcpkgPorts {
+function Install-NhcVcpkgPort {
     <#
     .SYNOPSIS
     Build and install the requested vcpkg ports.
@@ -74,22 +74,22 @@ function Install-NhcVcpkgPorts {
     Enforces exact version usage for build tools from the manifest file. Corresponds to the vcpkg flag '--x-abi-tools-use-exact-versions'.
 
     .EXAMPLE
-    Install-NhcVcpkgPorts -All -Tag ''
+    Install-NhcVcpkgPort -All -Tag ''
 
     Builds and installs all ports defined by the default manifest file to './build/<yyyyMMdd-HHmmss>' for the default target triplet.
 
     .EXAMPLE
-    Install-NhcVcpkgPorts -All -Tag 1.0.0 -ManifestDir './config'
+    Install-NhcVcpkgPort -All -Tag 1.0.0 -ManifestDir './config'
 
     Builds and installs all ports defined by './config/vcpkg.json' to './build/<yyyyMMdd-HHmmss>' for the default target triplet.
 
     .EXAMPLE
-    Install-NhcVcpkgPorts -Ports zlib -OutputDir 'c:/vcpkg-release' -Triplet x64-windows-static
+    Install-NhcVcpkgPort -Ports zlib -OutputDir 'c:/vcpkg-release' -Triplet x64-windows-static
 
     Builds and installs zlib and its dependencies to 'c:/vcpkg-release' for the x64-windows-static triplet.
 
     .EXAMPLE
-    Install-NhcVcpkgPorts -All -RootDir '/vcpkg/2025-07-25' -OutputDir '/vcpkg-releases/2025-07-25' -Triplet x64-linux
+    Install-NhcVcpkgPort -All -RootDir '/vcpkg/2025-07-25' -OutputDir '/vcpkg-releases/2025-07-25' -Triplet x64-linux
 
     Builds and installs all ports defined by the default manifest to '/vcpkg-releases/2025-07-25' for the x64-linux triplet.
 
@@ -114,6 +114,7 @@ function Install-NhcVcpkgPorts {
     #>
 
     [CmdletBinding(DefaultParameterSetName = "Ports", SupportsShouldProcess = $true)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'The WhatIf preview must always reach the console; Write-Information is silent by default.')]
     param (
         [Parameter(ParameterSetName = "Ports", Mandatory = $true, Position = 0)]
         [string[]]$Ports,
@@ -179,7 +180,7 @@ function Install-NhcVcpkgPorts {
         # Build the common vcpkg arguments list:
         $tagged.OutputDir ??= @{ Path = ''; Exists = $false }
         # Note: OutputDir must be passed as ParentDir so required directories (above) are created under either the default <vcpkg-root> or the caller-defined output directory.
-        $config += Get-CommonArguments -Parameters $PSBoundParameters -Directories $required -ParentDir $tagged.OutputDir.Path
+        $config += Get-CommonArgument -Parameters $PSBoundParameters -Directories $required -ParentDir $tagged.OutputDir.Path
 
         $private:exe = $config.Command
         $private:verb = 'install'
@@ -251,3 +252,5 @@ function Install-NhcVcpkgPorts {
         return $config
     }
 }
+
+Set-Alias -Name Install-NhcVcpkgPorts -Value Install-NhcVcpkgPort

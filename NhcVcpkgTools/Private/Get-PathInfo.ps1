@@ -19,6 +19,7 @@ function Get-PathInfo {
     #>
 
     [CmdletBinding()]
+    [OutputType([System.IO.FileSystemInfo], [System.IO.FileInfo])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string]$Path,

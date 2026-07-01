@@ -3,7 +3,7 @@ Set-StrictMode -Version 3.0
 # Valid export formats. This is exported from the module so that it can be accessed from ArgumentCompleter:
 $g_NhcVcpkgValidExportFormats = @( "zip", "7zip", "nuget" )
 
-function Export-NhcVcpkgPorts {
+function Export-NhcVcpkgPort {
     <#
     .SYNOPSIS
     Exports installed vcpkg ports.
@@ -65,37 +65,37 @@ function Export-NhcVcpkgPorts {
     Specifies the path to the installed ports. The path must exist, and defaults to '<vcpkg-root>/installed'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -All -Format zip -Tag ''
+    Export-NhcVcpkgPort -All -Format zip -Tag ''
 
     Exports all installed ports from '<vcpkg-root>/installed' to './<yyyyMMdd-hhmmss>/vcpkg-export.zip'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports fmt -Format zip -Output 'fmt-release'
+    Export-NhcVcpkgPort -Ports fmt -Format zip -Output 'fmt-release'
 
     Export 'fmt' from '<vcpkg-root>/installed' to './fmt-release.zip'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports boost-filesystem,fmt -Format 7zip -Triplet x64-linux
+    Export-NhcVcpkgPort -Ports boost-filesystem,fmt -Format 7zip -Triplet x64-linux
 
     Exports only 'boost-filesystem' and 'fmt' ports from '<vcpkg-root>'/installed for the x64-linux triplet to './vcpkg-export.7z'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports zlib -Raw -InstallDir '/vcpkg-data/installed' -OutputDir '.' -Tag ''
+    Export-NhcVcpkgPort -Ports zlib -Raw -InstallDir '/vcpkg-data/installed' -OutputDir '.' -Tag ''
 
     Raw export of 'zlib' from '/vcpkg-data/installed' to './<yyyyMMdd-hhmmss>/...' using the default root for version control.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports zlib -Raw -RootDir '/vcpkg-root' -OutputDir '.' -Tag ''
+    Export-NhcVcpkgPort -Ports zlib -Raw -RootDir '/vcpkg-root' -OutputDir '.' -Tag ''
 
     Raw export of 'zlib' from '/vcpkg-root/installed' to './<yyyyMMdd-hhmmss>/...'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports zlib -Format 7zip -RootDir '/vcpkg-root' -OutputDir '.' -Output 'zlib-current' -Tag ''
+    Export-NhcVcpkgPort -Ports zlib -Format 7zip -RootDir '/vcpkg-root' -OutputDir '.' -Output 'zlib-current' -Tag ''
 
     Export 'zlib' from '/vcpkg-root/installed' to './<yyyyMMdd-hhmmss>/zlib-current.7z'.
 
     .EXAMPLE
-    Export-NhcVcpkgPorts -Ports zlib -Format zip -Vcpkg '/vcpkg-root/vcpkg' -RootDir '/vcpkg-root' -Tag ''
+    Export-NhcVcpkgPort -Ports zlib -Format zip -Vcpkg '/vcpkg-root/vcpkg' -RootDir '/vcpkg-root' -Tag ''
 
     Export 'zlib' from '/vcpkg-root/installed' to './export/<yyyyMMdd-hhmmss>/vcpkg-export.zip'.
 
@@ -117,6 +117,8 @@ function Export-NhcVcpkgPorts {
     #>
 
     [CmdletBinding(SupportsShouldProcess = $true)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'The WhatIf preview must always reach the console; Write-Information is silent by default.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'ArgumentCompleter uses a fixed positional signature; unused positions are intentional.')]
     param (
         [Parameter(ParameterSetName = "PortsRaw", Mandatory = $true, Position = 0)]
         [Parameter(ParameterSetName = "PortsFile", Mandatory = $true, Position = 0)]
@@ -241,7 +243,7 @@ function Export-NhcVcpkgPorts {
 
         # Build the common vcpkg arguments list:
         $PSBoundParameters.OutputDir = $tagged.OutputDir.Path
-        $config += Get-CommonArguments -Parameters $PSBoundParameters -Directories $required
+        $config += Get-CommonArgument -Parameters $PSBoundParameters -Directories $required
 
         $private:exe = $config.Command
         $private:verb = 'export'
@@ -322,3 +324,5 @@ function Export-NhcVcpkgPorts {
         return $config
     }
 }
+
+Set-Alias -Name Export-NhcVcpkgPorts -Value Export-NhcVcpkgPort

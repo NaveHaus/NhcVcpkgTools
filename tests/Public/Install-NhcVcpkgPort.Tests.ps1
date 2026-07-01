@@ -7,9 +7,12 @@ AfterAll {
     Exit-NhcVcpkgToolsTest
 }
 
-Describe 'Install-NhcVcpkgPorts' {
+Describe 'Install-NhcVcpkgPort' {
     BeforeAll {
         function New-TestVcpkgRoot {
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test helper, not a user-facing cmdlet')]
+            param()
+
             $rootDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
             New-Item -Path $rootDir -ItemType Directory | Out-Null
             New-Item -Path (Join-Path $rootDir '.vcpkg-root') -ItemType File | Out-Null
@@ -48,7 +51,7 @@ Describe 'Install-NhcVcpkgPorts' {
 
     Context 'Classic ports install' {
         It 'builds classic arguments with root and triplet' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $expectedRoot = (Resolve-Path -Path $script:rootInfo.RootDir).ProviderPath
             $script:capturedArguments | Should -Contain 'install'
@@ -62,7 +65,7 @@ Describe 'Install-NhcVcpkgPorts' {
 
     Context 'Manifest install arguments' {
         It 'adds manifest feature flags for -All' {
-            $null = Install-NhcVcpkgPorts -All -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Install-NhcVcpkgPort -All -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain '--feature-flags="manifest,versions"'
             $script:capturedArguments | Should -Not -Contain '--classic'
@@ -74,7 +77,7 @@ Describe 'Install-NhcVcpkgPorts' {
             $outputDir = Join-Path $TestDrive 'output'
             New-Item -Path $outputDir -ItemType Directory | Out-Null
 
-            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $outputDir -Tag 'release' |
+            $result = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $outputDir -Tag 'release' |
             Where-Object { $_ -is [hashtable] } |
             Select-Object -Last 1
 
@@ -95,7 +98,7 @@ Describe 'Install-NhcVcpkgPorts' {
         It 'includes binary source and toggle flags' {
             $binarySources = @('files,c:/cache,readwrite', 'clear;files,d:/vcpkg,read')
 
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -BinarySources $binarySources -CachedOnly -Editable -ExactVersions
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -BinarySources $binarySources -CachedOnly -Editable -ExactVersions
 
             $script:capturedArguments | Should -Contain "--binarysource=`"$($binarySources[0])`""
             $script:capturedArguments | Should -Contain "--binarysource=`"$($binarySources[1])`""
@@ -107,7 +110,7 @@ Describe 'Install-NhcVcpkgPorts' {
 
     Context 'Environment parameters' {
         It 'passes Env hashtable entries to Start-Process -Environment' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'bar' }
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'bar' }
 
             $script:capturedEnvironment | Should -Not -BeNullOrEmpty
             $script:capturedEnvironment.ContainsKey('FOO') | Should -BeTrue
@@ -115,7 +118,7 @@ Describe 'Install-NhcVcpkgPorts' {
         }
 
         It 'passes null Env values through to Start-Process -Environment' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = $null }
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = $null }
 
             $script:capturedEnvironment | Should -Not -BeNullOrEmpty
             $script:capturedEnvironment.ContainsKey('FOO') | Should -BeTrue
@@ -127,7 +130,7 @@ Describe 'Install-NhcVcpkgPorts' {
             try {
                 $env:FOO = 'original'
 
-                $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'child' }
+                $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ FOO = 'child' }
 
                 $env:FOO | Should -Be 'original'
                 $script:capturedEnvironment['FOO'] | Should -Be 'child'
@@ -143,20 +146,20 @@ Describe 'Install-NhcVcpkgPorts' {
         }
 
         It 'sets VCPKG_KEEP_ENV_VARS from KeepEnvVars using semicolons' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @('A', 'B')
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @('A', 'B')
 
             $script:capturedEnvironment.ContainsKey('VCPKG_KEEP_ENV_VARS') | Should -BeTrue
             $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be 'A;B'
         }
 
         It 'prefers KeepEnvVars over Env VCPKG_KEEP_ENV_VARS' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ VCPKG_KEEP_ENV_VARS = 'X;Y' } -KeepEnvVars @('A', 'B')
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Env @{ VCPKG_KEEP_ENV_VARS = 'X;Y' } -KeepEnvVars @('A', 'B')
 
             $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be 'A;B'
         }
 
         It 'preserves KeepEnvVars entries exactly (no trim, no dedupe)' {
-            $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @(' A', 'A', 'B ')
+            $null = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @(' A', 'A', 'B ')
 
             $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be ' A;A;B '
         }
@@ -166,7 +169,7 @@ Describe 'Install-NhcVcpkgPorts' {
         It 'returns Status false when vcpkg exits non-zero' {
             Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 1 } }
 
-            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeFalse
         }
@@ -174,7 +177,7 @@ Describe 'Install-NhcVcpkgPorts' {
         It 'returns Status true when vcpkg exits zero' {
             Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 0 } }
 
-            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeTrue
         }
@@ -182,7 +185,7 @@ Describe 'Install-NhcVcpkgPorts' {
         It 'returns Status false when vcpkg fails to launch' {
             Mock Start-Process -ModuleName $script:moduleName { throw 'launch failed' }
 
-            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Install-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeFalse
         }
