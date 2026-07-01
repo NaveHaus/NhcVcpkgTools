@@ -178,5 +178,13 @@ Describe 'Install-NhcVcpkgPorts' {
 
             $result.Status | Should -BeTrue
         }
+
+        It 'returns Status false when vcpkg fails to launch' {
+            Mock Start-Process -ModuleName $script:moduleName { throw 'launch failed' }
+
+            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+        }
     }
 }
