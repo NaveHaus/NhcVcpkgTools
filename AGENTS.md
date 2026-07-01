@@ -8,10 +8,13 @@
   ./build.ps1 -Tasks build
   ```
 
-- Execute all tests:
+- Execute all tests (canonical — builds the module and sets `PSModulePath`
+  so the QA tests under `tests/QA` are discovered, matching CI):
   ```powershell
-  Invoke-Pester
+  ./build.ps1 -Tasks test
   ```
+  A bare `Invoke-Pester` runs the unit tests but fails QA discovery unless
+  the module has already been built and is on `PSModulePath`.
 
 ## Repo-specific constraints
 

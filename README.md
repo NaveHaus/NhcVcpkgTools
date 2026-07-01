@@ -67,10 +67,15 @@ This module uses [Pester](https://pester.dev/) v5+ for unit testing. To run test
     ```powershell
     Install-Module Pester -Force
     ```
-2.  Run all tests from the module root:
+2.  Run the full suite the way CI does — this builds the module and puts it
+    on `PSModulePath` so the QA tests under `tests/QA` are discovered:
     ```powershell
-    Invoke-Pester -Path tests
+    ./build.ps1 -Tasks test
     ```
+    For a fast inner loop on unit tests, `Invoke-Pester -Path tests` also
+    works, but the module must already be built (`./build.ps1 -Tasks build`);
+    otherwise the QA tests in `tests/QA` fail discovery because the built
+    module is not on `PSModulePath`.
 
 ## Running Lint
 
