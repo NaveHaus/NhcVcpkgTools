@@ -23,6 +23,7 @@ The following functions are exported by this module:
 
 *   `Install-NhcVcpkgPort`: Installs one or more vcpkg ports.
 *   `Export-NhcVcpkgPort`: Exports installed vcpkg ports to a specified format.
+*   `Remove-NhcVcpkgPort`: Removes installed or outdated vcpkg ports.
 
 ## Installation
 
@@ -41,10 +42,10 @@ This function installs one or more vcpkg ports for a specified triplet.
 
 ```powershell
 # Example: Install the 'fmt' port for the default triplet
-Install-NhcVcpkgPort -PortName "fmt"
+Install-NhcVcpkgPort -Ports "fmt"
 
 # Example: Install multiple ports for a specific triplet
-Install-NhcVcpkgPort -PortName "fmt", "gtest" -Triplet "x64-windows-static"
+Install-NhcVcpkgPort -Ports "fmt", "gtest" -Triplet "x64-windows-static"
 ```
 
 ### Export-NhcVcpkgPort
@@ -53,10 +54,22 @@ This function exports all installed vcpkg ports to a specified format, such as z
 
 ```powershell
 # Example: Export all installed ports to a zip file
-Export-NhcVcpkgPort -Format zip
+Export-NhcVcpkgPort -All -Format zip
 
 # Example: Export all installed ports to a 7z file in a specific directory
-Export-NhcVcpkgPort -Format 7zip -OutputDir "C:\vcpkg_exports"
+Export-NhcVcpkgPort -All -Format 7zip -OutputDir "C:\vcpkg_exports"
+```
+
+### Remove-NhcVcpkgPort
+
+This function removes installed or outdated vcpkg ports.
+
+```powershell
+# Example: Remove specific ports
+Remove-NhcVcpkgPort -Ports "zlib", "fmt"
+
+# Example: Remove all outdated ports
+Remove-NhcVcpkgPort -Outdated
 ```
 
 ## Running Tests
