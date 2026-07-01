@@ -7,9 +7,12 @@ AfterAll {
     Exit-NhcVcpkgToolsTest
 }
 
-Describe 'Remove-NhcVcpkgPorts' {
+Describe 'Remove-NhcVcpkgPort' {
     BeforeAll {
         function New-TestVcpkgRoot {
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test helper, not a user-facing cmdlet')]
+            param()
+
             $rootDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
             New-Item -Path $rootDir -ItemType Directory | Out-Null
             New-Item -Path (Join-Path $rootDir '.vcpkg-root') -ItemType File | Out-Null
@@ -45,41 +48,41 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'Function discoverability' {
         It 'is discoverable via Get-Command' {
-            $command = Get-Command Remove-NhcVcpkgPorts -Module NhcVcpkgTools -ErrorAction SilentlyContinue
+            $command = Get-Command Remove-NhcVcpkgPort -Module NhcVcpkgTools -ErrorAction SilentlyContinue
             $command | Should -Not -BeNullOrEmpty
-            $command.Name | Should -Be 'Remove-NhcVcpkgPorts'
+            $command.Name | Should -Be 'Remove-NhcVcpkgPort'
         }
     }
 
     Context 'Parameter sets' {
         It 'accepts -Ports parameter and passes port names to vcpkg remove' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib', 'fmt' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib', 'fmt' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain 'zlib'
             $script:capturedArguments | Should -Contain 'fmt'
         }
 
         It 'accepts -Outdated switch and passes --outdated flag to vcpkg' {
-            $null = Remove-NhcVcpkgPorts -Outdated -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Outdated -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain '--outdated'
         }
 
         It 'rejects -Ports and -Outdated used together' {
-            { Remove-NhcVcpkgPorts -Ports 'zlib' -Outdated -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command } |
+            { Remove-NhcVcpkgPort -Ports 'zlib' -Outdated -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command } |
             Should -Throw -ErrorId 'AmbiguousParameterSet*'
         }
     }
 
     Context 'Recurse switch' {
         It 'includes --recurse flag when -Recurse is specified' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -Recurse -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -Recurse -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain '--recurse'
         }
 
         It 'does not include --recurse flag when -Recurse is not specified' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Not -Contain '--recurse'
         }
@@ -87,14 +90,14 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'Common arguments' {
         It 'passes -RootDir as --vcpkg-root to vcpkg' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $expectedRoot = (Resolve-Path -Path $script:rootInfo.RootDir).ProviderPath
             $script:capturedArguments | Should -Contain "--vcpkg-root=`"$expectedRoot`""
         }
 
         It 'passes -Triplet as --triplet to vcpkg' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain "--triplet=`"$script:triplet`""
         }
@@ -103,7 +106,7 @@ Describe 'Remove-NhcVcpkgPorts' {
             $overlayPath = Join-Path $TestDrive 'overlay-ports'
             New-Item -Path $overlayPath -ItemType Directory | Out-Null
 
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OverlayPorts $overlayPath
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OverlayPorts $overlayPath
 
             $expectedPath = (Resolve-Path -Path $overlayPath).ProviderPath
             $script:capturedArguments | Should -Contain "--overlay-ports=`"$expectedPath`""
@@ -113,7 +116,7 @@ Describe 'Remove-NhcVcpkgPorts' {
             $installPath = Join-Path $TestDrive 'custom-installed'
             New-Item -Path $installPath -ItemType Directory | Out-Null
 
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -InstallDir $installPath
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -InstallDir $installPath
 
             $expectedPath = (Resolve-Path -Path $installPath).ProviderPath
             $script:capturedArguments | Should -Contain "--x-install-root=`"$expectedPath`""
@@ -122,13 +125,13 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'ShouldProcess support' {
         It 'declares SupportsShouldProcess in CmdletBinding' {
-            $command = Get-Command Remove-NhcVcpkgPorts -Module NhcVcpkgTools
+            $command = Get-Command Remove-NhcVcpkgPort -Module NhcVcpkgTools
             $command.Parameters.ContainsKey('WhatIf') | Should -BeTrue
             $command.Parameters.ContainsKey('Confirm') | Should -BeTrue
         }
 
         It 'includes --dry-run flag when -WhatIf is specified' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -WhatIf
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -WhatIf
 
             $script:capturedArguments | Should -Contain '--dry-run'
         }
@@ -136,17 +139,17 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'Quiet switch' {
         It 'accepts -Quiet switch parameter' {
-            $command = Get-Command Remove-NhcVcpkgPorts -Module NhcVcpkgTools
+            $command = Get-Command Remove-NhcVcpkgPort -Module NhcVcpkgTools
             $quietParam = $command.Parameters['Quiet']
-            
+
             $quietParam | Should -Not -BeNullOrEmpty
             $quietParam.SwitchParameter | Should -BeTrue
         }
 
         It 'suppresses output when -Quiet is specified' {
             # Test that the -Quiet parameter can be bound and function executes
-            { Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Quiet } | Should -Not -Throw
-            
+            { Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Quiet } | Should -Not -Throw
+
             # Verify Start-Process was called (indicating Quiet didn't prevent execution)
             $script:capturedCommand | Should -Not -BeNullOrEmpty
         }
@@ -154,7 +157,7 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'Force switch' {
         It 'accepts -Force switch parameter' {
-            $command = Get-Command Remove-NhcVcpkgPorts -Module NhcVcpkgTools
+            $command = Get-Command Remove-NhcVcpkgPort -Module NhcVcpkgTools
             $forceParam = $command.Parameters['Force']
 
             $forceParam | Should -Not -BeNullOrEmpty
@@ -166,7 +169,7 @@ Describe 'Remove-NhcVcpkgPorts' {
             $ConfirmPreference = 'Low'
 
             try {
-                $null = Remove-NhcVcpkgPorts -Ports 'zlib' -Force -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+                $null = Remove-NhcVcpkgPort -Ports 'zlib' -Force -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
                 $script:capturedCommand | Should -Not -BeNullOrEmpty
                 $script:capturedArguments | Should -Not -Contain '--dry-run'
@@ -181,7 +184,7 @@ Describe 'Remove-NhcVcpkgPorts' {
             $ConfirmPreference = 'Low'
 
             try {
-                $null = Remove-NhcVcpkgPorts -Ports 'zlib' -Force -Confirm:$false -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+                $null = Remove-NhcVcpkgPort -Ports 'zlib' -Force -Confirm:$false -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
                 $script:capturedCommand | Should -Not -BeNullOrEmpty
                 $ConfirmPreference | Should -Be 'Low'
@@ -192,7 +195,7 @@ Describe 'Remove-NhcVcpkgPorts' {
         }
 
         It 'performs dry-run when -Force and -WhatIf are both specified' {
-            $null = Remove-NhcVcpkgPorts -Ports 'zlib' -Force -WhatIf -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $null = Remove-NhcVcpkgPort -Ports 'zlib' -Force -WhatIf -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $script:capturedArguments | Should -Contain '--dry-run'
         }
@@ -202,11 +205,11 @@ Describe 'Remove-NhcVcpkgPorts' {
             $ConfirmPreference = 'Low'
 
             try {
-                $null = Remove-NhcVcpkgPorts -Ports 'zlib' -Force -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+                $null = Remove-NhcVcpkgPort -Ports 'zlib' -Force -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
                 $ConfirmPreference | Should -Be 'Low'
 
-                $command = Get-Command Remove-NhcVcpkgPorts -Module NhcVcpkgTools
+                $command = Get-Command Remove-NhcVcpkgPort -Module NhcVcpkgTools
                 $command.Definition | Should -Match 'if \(\$Force -and -not \$PSBoundParameters\.ContainsKey\(''Confirm''\)\)'
                 $command.Definition | Should -Match '\$ConfirmPreference = ''None'''
             }
@@ -218,24 +221,24 @@ Describe 'Remove-NhcVcpkgPorts' {
 
     Context 'Ports parameter validation' {
         It 'rejects empty Ports array' {
-            { Remove-NhcVcpkgPorts -Ports @() } |
+            { Remove-NhcVcpkgPort -Ports @() } |
             Should -Throw -ErrorId 'ParameterArgumentValidationError*'
         }
 
         It 'rejects null Ports value' {
-            { Remove-NhcVcpkgPorts -Ports $null } |
+            { Remove-NhcVcpkgPort -Ports $null } |
             Should -Throw -ErrorId 'ParameterArgumentValidationError*'
         }
 
         It 'accepts valid single port value' {
-            { Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet } | Should -Not -Throw
+            { Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet } | Should -Not -Throw
             $script:capturedArguments | Should -Contain 'zlib'
         }
     }
 
     Context 'Return value structure' {
         It 'returns hashtable with Command as string path' {
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result | Should -BeOfType [hashtable]
             $result.Command | Should -BeOfType [string]
@@ -243,7 +246,7 @@ Describe 'Remove-NhcVcpkgPorts' {
         }
 
         It 'returns hashtable with Arguments as array' {
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             , $result.Arguments | Should -BeOfType [array]
             $result.Arguments | Should -Contain 'zlib'
@@ -251,14 +254,14 @@ Describe 'Remove-NhcVcpkgPorts' {
         }
 
         It 'returns hashtable with RootDir as string path' {
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.RootDir | Should -BeOfType [string]
             $result.RootDir | Should -Not -BeNullOrEmpty
         }
 
         It 'returns hashtable with InstallDir containing Path and Exists keys' {
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.InstallDir | Should -BeOfType [hashtable]
             $result.InstallDir.ContainsKey('Path') | Should -BeTrue
@@ -268,7 +271,7 @@ Describe 'Remove-NhcVcpkgPorts' {
         }
 
         It 'returns Status as true on successful execution' {
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeTrue
         }
@@ -280,7 +283,7 @@ Describe 'Remove-NhcVcpkgPorts' {
             }
 
 
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -ErrorAction SilentlyContinue
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -ErrorAction SilentlyContinue
 
             $result.Status | Should -BeFalse
         }
@@ -290,7 +293,7 @@ Describe 'Remove-NhcVcpkgPorts' {
         It 'returns Status false when vcpkg exits non-zero' {
             Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 1 } }
 
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeFalse
         }
@@ -298,7 +301,7 @@ Describe 'Remove-NhcVcpkgPorts' {
         It 'returns Status true when vcpkg exits zero' {
             Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 0 } }
 
-            $result = Remove-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeTrue
         }

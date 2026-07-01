@@ -7,7 +7,7 @@ AfterAll {
     Exit-NhcVcpkgToolsTest
 }
 
-Describe 'Get-CommonArguments' {
+Describe 'Get-CommonArgument' {
     BeforeEach {
         Mock Test-VcpkgRoot { return $true }
         Mock Test-Executable { return $true }
@@ -20,7 +20,7 @@ Describe 'Get-CommonArguments' {
         It 'should throw an error if Command is invalid' {
             InModuleScope -ScriptBlock {
                 $params = @{ Command = 'invalid-exe' }
-                { Get-CommonArguments -Parameters $params } | Should -Throw
+                { Get-CommonArgument -Parameters $params } | Should -Throw
             }
         }
 
@@ -30,7 +30,7 @@ Describe 'Get-CommonArguments' {
                 $exePath = Join-Path -Path $rootDir -ChildPath 'vcpkg.exe'
                 Mock Get-Executable { return $exePath }
                 $params = @{ RootDir = $rootDir; Command = $exePath }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.RootDir | Should -Be $rootDir
                 $result.Command | Should -Be $exePath
             }
@@ -39,7 +39,7 @@ Describe 'Get-CommonArguments' {
         It 'should include classic mode when Ports key is present' {
             InModuleScope -ScriptBlock {
                 $params = @{ Ports = 'zlib'; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Contain '--classic'
             }
         }
@@ -47,7 +47,7 @@ Describe 'Get-CommonArguments' {
         It 'should include feature flags when All key is present' {
             InModuleScope -ScriptBlock {
                 $params = @{ All = $true; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Where-Object { $_ -like '*manifest*' } | Should -Not -BeNullOrEmpty
             }
         }
@@ -67,7 +67,7 @@ Describe 'Get-CommonArguments' {
                 $expectedBuildDir = Join-Path -Path $rootDir -ChildPath 'custombuildtrees'
                 $expectedPackageDir = Join-Path -Path $rootDir -ChildPath 'custompackages'
                 $expectedInstallDir = Join-Path -Path $rootDir -ChildPath 'custominstalled'
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Contain "--downloads-root=`"$expectedDownloadDir`""
                 $result.Arguments | Should -Contain "--x-buildtrees-root=`"$expectedBuildDir`""
                 $result.Arguments | Should -Contain "--x-packages-root=`"$expectedPackageDir`""
@@ -80,7 +80,7 @@ Describe 'Get-CommonArguments' {
         It 'should include --outdated flag when Outdated key is present and truthy' {
             InModuleScope -ScriptBlock {
                 $params = @{ Outdated = $true; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Contain '--outdated'
             }
         }
@@ -88,7 +88,7 @@ Describe 'Get-CommonArguments' {
         It 'should NOT include --outdated flag when Outdated key is not present' {
             InModuleScope -ScriptBlock {
                 $params = @{ RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Not -Contain '--outdated'
             }
         }
@@ -98,7 +98,7 @@ Describe 'Get-CommonArguments' {
         It 'should include --recurse flag when Recurse key is present and truthy' {
             InModuleScope -ScriptBlock {
                 $params = @{ Recurse = $true; RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Contain '--recurse'
             }
         }
@@ -106,7 +106,7 @@ Describe 'Get-CommonArguments' {
         It 'should NOT include --recurse flag when Recurse key is not present' {
             InModuleScope -ScriptBlock {
                 $params = @{ RootDir = (Get-Location).ProviderPath; Command = 'vcpkg.exe' }
-                $result = Get-CommonArguments -Parameters $params
+                $result = Get-CommonArgument -Parameters $params
                 $result.Arguments | Should -Not -Contain '--recurse'
             }
         }
@@ -120,12 +120,12 @@ Describe 'Get-CommonArguments' {
                     RootDir = $rootDir
                     Command = 'vcpkg.exe'
                 }
-                $result = Get-CommonArguments -Parameters $params
-                
+                $result = Get-CommonArgument -Parameters $params
+
                 # Verify Command and RootDir are strings
                 $result.Command | Should -BeOfType [string]
                 $result.RootDir | Should -BeOfType [string]
-                
+
                 # Verify all directory Path values are strings
                 $result.ParentDir.Path | Should -BeOfType [string]
                 $result.DownloadDir.Path | Should -BeOfType [string]
