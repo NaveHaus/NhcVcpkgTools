@@ -42,7 +42,7 @@ Describe 'Install-NhcVcpkgPorts' {
             $script:capturedCommand = $FilePath
             $script:capturedArguments = $ArgumentList + @($NoNewWindow,$Wait,$WhatIf,$Confirm)
             $script:capturedEnvironment = $Environment
-            # Important: do not return anything from this mock.
+            return [pscustomobject]@{ ExitCode = 0 }
         }
     }
 
@@ -159,6 +159,24 @@ Describe 'Install-NhcVcpkgPorts' {
             $null = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -KeepEnvVars @(' A', 'A', 'B ')
 
             $script:capturedEnvironment['VCPKG_KEEP_ENV_VARS'] | Should -Be ' A;A;B '
+        }
+    }
+
+    Context 'vcpkg exit status' {
+        It 'returns Status false when vcpkg exits non-zero' {
+            Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 1 } }
+
+            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+        }
+
+        It 'returns Status true when vcpkg exits zero' {
+            Mock Start-Process -ModuleName $script:moduleName { return [pscustomobject]@{ ExitCode = 0 } }
+
+            $result = Install-NhcVcpkgPorts -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeTrue
         }
     }
 }
