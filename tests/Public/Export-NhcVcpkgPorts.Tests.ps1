@@ -10,6 +10,9 @@ AfterAll {
 Describe 'Export-NhcVcpkgPorts' {
     BeforeAll {
         function New-TestVcpkgRoot {
+            [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Test helper, not a user-facing cmdlet')]
+            param()
+
             $rootDir = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
             New-Item -Path $rootDir -ItemType Directory | Out-Null
             New-Item -Path (Join-Path $rootDir '.vcpkg-root') -ItemType File | Out-Null
@@ -43,6 +46,14 @@ Describe 'Export-NhcVcpkgPorts' {
             $result = Export-NhcVcpkgPorts -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
 
             $result.Status | Should -BeTrue
+        }
+
+        It 'returns Status false when vcpkg fails to launch' {
+            Mock Start-Process -ModuleName $script:moduleName { throw 'launch failed' }
+
+            $result = Export-NhcVcpkgPorts -Ports 'zlib' -Raw -Quiet -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -OutputDir $script:outputDir -Tag 'run'
+
+            $result.Status | Should -BeFalse
         }
     }
 }
