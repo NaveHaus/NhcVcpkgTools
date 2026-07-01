@@ -1,6 +1,7 @@
 /*
 
 !.github
+!docs
 !NhcVcpkgTools
 !tests
 !tools
@@ -18,3 +19,4 @@
 
 # AI assistant artifacts
 context-snapshot.json
+state.md
