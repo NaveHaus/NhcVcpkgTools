@@ -173,8 +173,23 @@ Describe 'Remove-NhcVcpkgPort' {
             InModuleScope -ModuleName $script:moduleName -Parameters @{ Command = $script:rootInfo.Command } -ScriptBlock {
                 param($Command)
 
-                $quietOutput = @(Invoke-Vcpkg -Command $Command -Arguments @('remove', 'zlib') -Quiet 2>&1)
-                $loudOutput = @(Invoke-Vcpkg -Command $Command -Arguments @('remove', 'zlib') 2>&1)
+                $redirectAll = '2' + '>&1'
+                $quietInvocation = [scriptblock]::Create(@"
+param(`$Command)
+& {
+    Invoke-Vcpkg -Command `$Command -Arguments @('remove', 'zlib') -Quiet $redirectAll
+}
+"@)
+
+                $loudInvocation = [scriptblock]::Create(@"
+param(`$Command)
+& {
+    Invoke-Vcpkg -Command `$Command -Arguments @('remove', 'zlib') $redirectAll
+}
+"@)
+
+                $quietOutput = @(& $quietInvocation $Command)
+                $loudOutput = @(& $loudInvocation $Command)
 
                 $quietErrors = @($quietOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
                 $loudErrors = @($loudOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
