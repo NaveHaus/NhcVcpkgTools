@@ -51,7 +51,3 @@ Describe 'Get-NormalizedNamedDir' {
         }
     }
 }
-
-
-
-
