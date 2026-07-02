@@ -147,12 +147,43 @@ Describe 'Remove-NhcVcpkgPort' {
             $quietParam.SwitchParameter | Should -BeTrue
         }
 
-        It 'suppresses output when -Quiet is specified' {
-            # Test that the -Quiet parameter can be bound and function executes
+        It 'binds and executes when -Quiet is specified' {
             { Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Quiet } | Should -Not -Throw
 
-            # Verify Start-Process was called (indicating Quiet didn't prevent execution)
             $script:capturedCommand | Should -Not -BeNullOrEmpty
+        }
+
+        It 'suppresses non-terminating Start-Process error records only when -Quiet is specified' {
+            Mock Start-Process -ModuleName $script:moduleName {
+                param(
+                    [string]$FilePath,
+                    [object[]]$ArgumentList,
+                    [switch]$NoNewWindow,
+                    [switch]$Wait,
+                    [switch]$PassThru,
+                    [switch]$WhatIf,
+                    [switch]$Confirm
+                )
+
+                $null = $FilePath, $ArgumentList, $NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm
+                Write-Error -Message 'simulated Start-Process error record' -ErrorAction Continue
+                return [pscustomobject]@{ ExitCode = 1 }
+            }
+
+            InModuleScope -ModuleName $script:moduleName -Parameters @{ Command = $script:rootInfo.Command } -ScriptBlock {
+                param($Command)
+
+                $quietOutput = @(Invoke-Vcpkg -Command $Command -Arguments @('remove', 'zlib') -Quiet 2>&1)
+                $loudOutput = @(Invoke-Vcpkg -Command $Command -Arguments @('remove', 'zlib') 2>&1)
+
+                $quietErrors = @($quietOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
+                $loudErrors = @($loudOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
+
+                $quietErrors | Should -BeNullOrEmpty
+                $loudErrors | Should -Not -BeNullOrEmpty
+                ($quietOutput | Where-Object { $_ -is [bool] }) | Should -BeFalse
+                ($loudOutput | Where-Object { $_ -is [bool] }) | Should -BeFalse
+            }
         }
 
         It 'passes Quiet through to Invoke-Vcpkg and returns failed status when vcpkg fails' {
@@ -336,32 +367,6 @@ Describe 'Remove-NhcVcpkgPort' {
     }
 
     Context 'vcpkg error scenarios' {
-        It 'returns Status false and preserves arguments when vcpkg reports port not installed' {
-            Mock Start-Process -ModuleName $script:moduleName {
-                param(
-                    [string]$FilePath,
-                    [object[]]$ArgumentList,
-                    [switch]$NoNewWindow,
-                    [switch]$Wait,
-                    [switch]$PassThru,
-                    [switch]$WhatIf,
-                    [switch]$Confirm
-                )
-
-                $script:capturedCommand = $FilePath
-                $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm)
-                return [pscustomobject]@{ ExitCode = 1 }
-            }
-
-            $result = Remove-NhcVcpkgPort -Ports 'not-installed' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
-
-            $result.Status | Should -BeFalse
-            $script:capturedCommand | Should -Be $script:rootInfo.Command
-            $script:capturedArguments | Should -Contain 'remove'
-            $script:capturedArguments | Should -Contain 'not-installed'
-            $script:capturedArguments | Should -Contain '--classic'
-        }
-
         It 'returns Status false when vcpkg fails to start' {
             Mock Start-Process -ModuleName $script:moduleName { throw 'cannot launch vcpkg' }
 
@@ -370,7 +375,7 @@ Describe 'Remove-NhcVcpkgPort' {
             $result.Status | Should -BeFalse
         }
 
-        It 'returns Status false for dependency conflict failures without Recurse' {
+        It 'omits --recurse for dependency conflict failures when -Recurse is not specified' {
             Mock Start-Process -ModuleName $script:moduleName {
                 param(
                     [string]$FilePath,
@@ -390,7 +395,10 @@ Describe 'Remove-NhcVcpkgPort' {
             $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeFalse
+            $script:capturedCommand | Should -Be $script:rootInfo.Command
+            $script:capturedArguments | Should -Contain 'remove'
             $script:capturedArguments | Should -Contain 'zlib'
+            $script:capturedArguments | Should -Contain '--classic'
             $script:capturedArguments | Should -Not -Contain '--recurse'
         }
 
