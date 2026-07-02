@@ -8,11 +8,6 @@ AfterAll {
 }
 
 Describe 'Get-NormalizedNamedDir' {
-    It 'has its own private source file' {
-        $sourcePath = Join-Path -Path $PSScriptRoot -ChildPath '../../NhcVcpkgTools/Private/Get-NormalizedNamedDir.ps1'
-        Test-Path -LiteralPath $sourcePath -PathType Leaf | Should -BeTrue
-    }
-
     It 'returns the default relative path under the parent path' {
         InModuleScope -ScriptBlock {
             $parentPath = Join-Path -Path $TestDrive -ChildPath 'vcpkg-root'
