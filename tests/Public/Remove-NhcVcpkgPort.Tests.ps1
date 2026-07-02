@@ -173,6 +173,8 @@ Describe 'Remove-NhcVcpkgPort' {
             InModuleScope -ModuleName $script:moduleName -Parameters @{ Command = $script:rootInfo.Command } -ScriptBlock {
                 param($Command)
 
+                # Construct merged-stream redirection dynamically so direct 2>&1 stays out of the
+                # parsed test AST; the direct form triggers a Linux PSScriptAnalyzer crash in lint.
                 $redirectAll = '2' + '>&1'
                 $quietInvocation = [scriptblock]::Create(@"
 param(`$Command)
@@ -194,10 +196,15 @@ param(`$Command)
                 $quietErrors = @($quietOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
                 $loudErrors = @($loudOutput | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
 
+                $quietStatusResults = @($quietOutput | Where-Object { $_ -is [bool] })
+                $loudStatusResults = @($loudOutput | Where-Object { $_ -is [bool] })
+
                 $quietErrors | Should -BeNullOrEmpty
                 $loudErrors | Should -Not -BeNullOrEmpty
-                ($quietOutput | Where-Object { $_ -is [bool] }) | Should -BeFalse
-                ($loudOutput | Where-Object { $_ -is [bool] }) | Should -BeFalse
+                $quietStatusResults.Count | Should -Be 1
+                $quietStatusResults[0] | Should -BeFalse
+                $loudStatusResults.Count | Should -Be 1
+                $loudStatusResults[0] | Should -BeFalse
             }
         }
 
@@ -403,7 +410,8 @@ param(`$Command)
                 )
 
                 $script:capturedCommand = $FilePath
-                $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm)
+                $script:capturedArguments = $ArgumentList
+                $null = $NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm
                 return [pscustomobject]@{ ExitCode = 1 }
             }
 
