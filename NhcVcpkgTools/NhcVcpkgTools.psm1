@@ -11,6 +11,7 @@ $private:PrivateFunctions = @(
     'Get-BinaryType'
     'Get-CommonArgument'
     'Get-DefaultTriplet'
+    'Get-NormalizedNamedDir'
     'Get-Executable'
     'Get-PathInfo'
     'Get-TaggedOutputDir'
