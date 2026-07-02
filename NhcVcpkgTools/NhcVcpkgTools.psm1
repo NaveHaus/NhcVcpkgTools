@@ -18,6 +18,7 @@ $private:PrivateFunctions = @(
     'Invoke-Vcpkg'
     'Join-RelativePath'
     'Test-AbsolutePath'
+    'Test-EmptyDirectory'
     'Test-Executable'
     'Test-FileNameString'
     'Test-PathString'
