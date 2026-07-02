@@ -26,6 +26,7 @@ Describe 'Remove-NhcVcpkgPort' {
     BeforeEach {
         $script:capturedArguments = $null
         $script:capturedCommand = $null
+        $script:capturedNoNewWindow = $null
         $script:triplet = 'x64-windows'
         $script:rootInfo = New-TestVcpkgRoot
 
@@ -152,6 +153,33 @@ Describe 'Remove-NhcVcpkgPort' {
 
             # Verify Start-Process was called (indicating Quiet didn't prevent execution)
             $script:capturedCommand | Should -Not -BeNullOrEmpty
+        }
+
+        It 'passes Quiet through to Invoke-Vcpkg and returns failed status when vcpkg fails' {
+            $script:capturedQuiet = $null
+
+            Mock Invoke-Vcpkg -ModuleName $script:moduleName {
+                param(
+                    [string]$Command,
+                    [object[]]$Arguments,
+                    [switch]$Quiet
+                )
+
+                $script:capturedCommand = $Command
+                $script:capturedArguments = $Arguments
+                $script:capturedQuiet = $Quiet
+                return $false
+            }
+
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet -Quiet
+
+            $result.Status | Should -BeFalse
+            $script:capturedCommand | Should -Be $script:rootInfo.Command
+            $script:capturedArguments | Should -Contain 'remove'
+            $script:capturedQuiet | Should -BeTrue
+            Should -Invoke Invoke-Vcpkg -ModuleName $script:moduleName -Times 1 -ParameterFilter {
+                $Quiet
+            }
         }
     }
 
@@ -304,6 +332,89 @@ Describe 'Remove-NhcVcpkgPort' {
             $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
 
             $result.Status | Should -BeTrue
+        }
+    }
+
+    Context 'vcpkg error scenarios' {
+        It 'returns Status false and preserves arguments when vcpkg reports port not installed' {
+            Mock Start-Process -ModuleName $script:moduleName {
+                param(
+                    [string]$FilePath,
+                    [object[]]$ArgumentList,
+                    [switch]$NoNewWindow,
+                    [switch]$Wait,
+                    [switch]$PassThru,
+                    [switch]$WhatIf,
+                    [switch]$Confirm
+                )
+
+                $script:capturedCommand = $FilePath
+                $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm)
+                return [pscustomobject]@{ ExitCode = 1 }
+            }
+
+            $result = Remove-NhcVcpkgPort -Ports 'not-installed' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+            $script:capturedCommand | Should -Be $script:rootInfo.Command
+            $script:capturedArguments | Should -Contain 'remove'
+            $script:capturedArguments | Should -Contain 'not-installed'
+            $script:capturedArguments | Should -Contain '--classic'
+        }
+
+        It 'returns Status false when vcpkg fails to start' {
+            Mock Start-Process -ModuleName $script:moduleName { throw 'cannot launch vcpkg' }
+
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+        }
+
+        It 'returns Status false for dependency conflict failures without Recurse' {
+            Mock Start-Process -ModuleName $script:moduleName {
+                param(
+                    [string]$FilePath,
+                    [object[]]$ArgumentList,
+                    [switch]$NoNewWindow,
+                    [switch]$Wait,
+                    [switch]$PassThru,
+                    [switch]$WhatIf,
+                    [switch]$Confirm
+                )
+
+                $script:capturedCommand = $FilePath
+                $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm)
+                return [pscustomobject]@{ ExitCode = 1 }
+            }
+
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+            $script:capturedArguments | Should -Contain 'zlib'
+            $script:capturedArguments | Should -Not -Contain '--recurse'
+        }
+
+        It 'inherits child console output through Start-Process without stderr capture' {
+            Mock Start-Process -ModuleName $script:moduleName {
+                param(
+                    [object[]]$ArgumentList,
+                    [switch]$NoNewWindow,
+                    [switch]$Wait,
+                    [switch]$PassThru,
+                    [switch]$WhatIf,
+                    [switch]$Confirm
+                )
+
+                $script:capturedArguments = $ArgumentList + @($NoNewWindow, $Wait, $PassThru, $WhatIf, $Confirm)
+                $script:capturedNoNewWindow = $NoNewWindow
+                return [pscustomobject]@{ ExitCode = 1 }
+            }
+
+            $result = Remove-NhcVcpkgPort -Ports 'zlib' -RootDir $script:rootInfo.RootDir -Command $script:rootInfo.Command -Triplet $script:triplet
+
+            $result.Status | Should -BeFalse
+            $script:capturedArguments | Should -Contain 'remove'
+            $script:capturedNoNewWindow | Should -BeTrue
         }
     }
 }

@@ -13,5 +13,5 @@ function Test-EmptyDirectory {
         [string]$Path
     )
 
-    return !(Get-ChildItem -LiteralPath $Path -ErrorAction Stop | Select-Object -First 1)
+    return !(Get-ChildItem -LiteralPath $Path -Force -ErrorAction Stop | Select-Object -First 1)
 }
