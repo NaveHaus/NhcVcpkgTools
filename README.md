@@ -1,7 +1,7 @@
 # NhcVcpkgTools
 
-<!-- [![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/NhcVcpkgTools.svg?style=flat&logo=powershell&label=PowerShell%20Gallery)](https://www.powershellgallery.com/packages/NhcVcpkgTools) -->
-[![License](https://img.shields.io/github/license/NaveHaus/NhcVcpkgTools.svg?style=flat)](LICENSE)
+[![Status](https://github.com/NaveHaus/NhcVcpkgTools/actions/workflows/ci.yml/badge.svg)](https://github.com/NaveHaus/NhcVcpkgTools/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Tools for working with vcpkg from PowerShell.
 
