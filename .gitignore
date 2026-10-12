@@ -1,24 +1,20 @@
 /*
 
-!.github
-!docs
-!NhcVcpkgTools
-!tests
-!tools
-!NhcVcpkgTools
 !.gitattributes
+!.github
 !.gitignore
 !AGENTS.md
-!build.ps1
-!build.yaml
+!CHANGELOG.md
 !CLAUDE.md
 !CODE_OF_CONDUCT.md
 !LICENSE
-!CHANGELOG.md
+!NhcVcpkgTools
+!NhcVcpkgTools
 !PSScriptAnalyzerSettings.ps1
 !README.md
-
-# AI assistant artifacts
-context-snapshot.json
-state.md
-session-log.md
+!build.ps1
+!build.yaml
+!docs
+!openspec
+!tests
+!tools
