@@ -28,7 +28,7 @@ Without repair, later changes would modify an inconsistent baseline and the CI c
 ## Non-Goals
 
 - No change to the CI workflow, module code, or tests; this change only brings specs in line with existing behavior.
-- No requirement for CI on branch pushes. The workflow's push trigger carries a path filter with only an exclusion pattern; at `master`, branch pushes do not start CI and only tag pushes do. Whether that is intended is an open question, so the spec covers only the pull-request trigger until it is answered.
+- No change to the workflow file's push trigger. At `master` its path filter holds only an exclusion pattern, which never matches a branch push and is ignored for tag pushes. The spec states the resulting behavior (pull requests to `master` and tag pushes); a separate change makes the workflow file declare it directly.
 - No renaming of plural command names in specs; `rename-public-cmdlets` owns that.
 - No restatement of vcpkg exit status or `-Quiet` behavior; `surface-vcpkg-exit-status` owns that.
 - No backfill of functional specs for `Export-NhcVcpkgPort` or `Install-NhcVcpkgPort` (deferred to a separate per-cmdlet effort).

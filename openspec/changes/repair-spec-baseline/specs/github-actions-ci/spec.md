@@ -17,6 +17,19 @@ The repository SHALL run its CI workflow for every pull request whose base branc
 - **WHEN** the pull request is opened or updated
 - **THEN** the CI workflow does not run for that pull request
 
+### Requirement: CI runs for tag pushes
+The repository SHALL run its CI workflow each time a tag is pushed, and SHALL NOT run it for a push to a branch alone; branch commits are covered by the pull-request trigger.
+
+#### Scenario: Tag push starts CI
+- **GIVEN** a commit in the repository
+- **WHEN** a tag pointing to it is pushed
+- **THEN** the CI workflow runs against the tagged commit
+
+#### Scenario: Branch push does not start CI
+- **GIVEN** a branch with no open pull request to `master`
+- **WHEN** new commits are pushed to the branch
+- **THEN** the CI workflow does not run for that push
+
 ### Requirement: CI fails when any check fails
 The CI workflow SHALL consist of independent checks (source-mode test, build-and-test, and lint; workflow jobs `import-and-test`, `build-and-test`, and `lint`), and a CI run SHALL be marked failed when any one of them fails.
 
