@@ -15,6 +15,7 @@ Without specs, contributors adding a function have no stated rule for where it g
 - The specs state that each module function, public or private, lives in its own source file named after the function, with a same-named unit test file in the matching visibility folder.
 - The specs state the per-function quality checks the QA suite applies, so a contributor knows what a new function must satisfy before the suite passes.
 - The specs state that a **source-mode import** makes every private function available to the module, consistent with the **built module**.
+- A unit test enforces the source-mode requirement, so the regression class behind `3a0fadf` and `7cff107` fails CI.
 
 ## Scope and Capabilities
 
@@ -32,12 +33,12 @@ None.
 - No specs for individual private helpers, including the hidden-file handling added to the empty-directory helper; the hidden-file fix is covered by unit tests, and no **port cmdlet** currently uses that helper.
 - No restatement of the `Remove-NhcVcpkgPort` error-scenario behavior covered by issue #12's tests; `surface-vcpkg-exit-status` specifies that behavior.
 - No code-coverage thresholds or other new test-quality targets.
-- No change to module code, tests, or the build.
+- No change to module code or the build; the only test change is the source-mode import test.
 - No spec for the QA suite's changelog checks.
 
 ## Impact
 
 - `openspec/specs/test-structure/spec.md` and `openspec/specs/module-internal-dependency-loading/spec.md` gain requirements.
-- At `master`, no automated test verifies that **source-mode import** provides every private function. The requirement describes behavior that holds today but is not enforced; closing that gap is follow-up work outside this change.
+- `tests/Private/SourceModeImport.Tests.ps1` imports the module from source in a child process and fails if any function defined under `Public` or `Private` is missing from module scope, or if anything other than the public functions and their **legacy aliases** is exported.
 - Archive order: archived last, after `surface-vcpkg-exit-status`.
-- No code, API, dependency, or workflow changes.
+- No module code, API, dependency, or workflow changes.
