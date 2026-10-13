@@ -14,6 +14,7 @@ Without repair, later changes would modify an inconsistent baseline and the CI c
 - The main specs describe the CI workflow as it behaves at the current `master` (`6f737c0`), including the PSScriptAnalyzer provisioning fix from `29e3d9e`.
 - `remove-ports` contains no requirements or scenarios that contradict each other or the module's behavior, and every requirement has at least one scenario.
 - Every main spec touched by this change has a real Purpose statement instead of a placeholder.
+- `.github/workflows/ci.yml` declares its push trigger as tag pushes only, matching its existing behavior (its path filter holds only an exclusion pattern, which never matches a branch push and is ignored for tag pushes).
 
 ## Scope and Capabilities
 
@@ -27,8 +28,7 @@ Without repair, later changes would modify an inconsistent baseline and the CI c
 
 ## Non-Goals
 
-- No change to the CI workflow, module code, or tests; this change only brings specs in line with existing behavior.
-- No change to the workflow file's push trigger. At `master` its path filter holds only an exclusion pattern, which never matches a branch push and is ignored for tag pushes. The spec states the resulting behavior (pull requests to `master` and tag pushes); a separate change makes the workflow file declare it directly.
+- No change to module code, tests, or when CI runs; the workflow edit only restates the existing trigger behavior.
 - No renaming of plural command names in specs; `rename-public-cmdlets` owns that.
 - No restatement of vcpkg exit status or `-Quiet` behavior; `surface-vcpkg-exit-status` owns that.
 - No backfill of functional specs for `Export-NhcVcpkgPort` or `Install-NhcVcpkgPort` (deferred to a separate per-cmdlet effort).
@@ -41,4 +41,4 @@ Without repair, later changes would modify an inconsistent baseline and the CI c
 - `openspec/specs/remove-ports/spec.md` loses two contradictory scenarios.
 - Purpose sections are outside the delta-spec format, so the Purpose text for `remove-ports` and `install-ports-tests` is set by a direct edit when this change is synced to the main specs, using the current singular-noun command names. The new `github-actions-ci` spec gets its Purpose from this change's delta spec.
 - Archive order: this change is archived first, before `rename-public-cmdlets`, `surface-vcpkg-exit-status`, and `test-quality-coverage`, whose delta specs assume this baseline.
-- No code, API, dependency, or workflow changes.
+- `.github/workflows/ci.yml`: the push trigger's path filter is replaced by an explicit tag filter; the set of events that run CI is unchanged. No code, API, or dependency changes.
