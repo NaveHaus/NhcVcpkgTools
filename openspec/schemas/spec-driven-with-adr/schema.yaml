@@ -174,7 +174,6 @@ artifacts:
       - **Context**: Background, current state, constraints, stakeholders
 
       - **Decisions**: Key technical choices with rationale (why X over Y?).
-      Include alternatives considered for each decision.
 
       - **Risks / Trade-offs**: Known limitations, things that could go wrong.
       Format: [Risk] → Mitigation
