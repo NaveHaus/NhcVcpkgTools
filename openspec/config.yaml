@@ -1,22 +1,37 @@
-schema: spec-driven
+schema: spec-driven-with-adr
 
 context: |
-  Refer to the project root AGENTS.md if not already part of the context.
+  - Tech stack: PowerShell 7, Pester, PSScriptAnalyzer, ModuleBuilder, ChangelogManagement
+  - MANDATORY skill usage:
+    - Use the 'exa-code-search' skill to search for public code examples, API syntax, library documentation, or debugging help
+    - Use the 'powershell-expert' skill when writing or refactoring PowerShell scripts to enforce modern, safe, and idiomatic practices
+    - Use the 'using-git-worktrees' skill to start isolated work
+    - Invoke the 'openspec-git-discipline' skill during any workflow in which proposal artifacts, branches, merges, or archive timing affect git history
+    - Use the 'conventional-commit' skill to generate `git commit` messages
 
 rules:
   proposal:
-    - Formulate proposals around a TDD red/green/refactor process
-    - Require implementing new tests when adding code
-    - Require updating existing tests when changing code
-    - Suggest implementing new tests when changing code that is untested
-    - Keep proposals under 2000 words
-  specs:
-    - Formulate specs around a TDD red/green/refactor process
-    - Be explicit about HOW a requirement must be met not just WHAT  must be met
+    - "MANDATORY: Invoke the 'openspec-plus-proposal' skill BEFORE writing the proposal"
+    - "MANDATORY: Use the 'glossary' skill to ensure consistent artifact wording"
   design:
-    - Formulate designs around a test-driven red/green/refactor process
+    - "MANDATORY: Invoke the 'openspec-plus-design' skill BEFORE writing the design document"
+    - "MANDATORY: Use the 'glossary' skill to ensure consistent artifact wording"
+    - "MANDATORY: Use the 'c4-diagrams' and 'mermaid-diagrams' skills when creating visual representations"
+  adr:
+    - "MANDATORY: Use the 'architecture-decision-records' skill"
+    - "MANDATORY: Use the 'glossary' skill to ensure consistent artifact wording"
+  specs:
+    - "MANDATORY: Invoke the 'openspec-plus-spec' skill BEFORE writing any specification"
+    - "MANDATORY: Use the 'glossary' skill to ensure consistent artifact wording"
   tasks:
-    - Break tasks into chunks of up to 2 hours of effort
-    - Formulate tasks involving testing/validation around a TDD red/green/refactor process
-    - Ensure all new code is validated by tasks that create new Unit tests
-    - Ensure all changed code is validated by tasks that update relevant existing Unit and/or Integration tests
+    - "MANDATORY: Invoke the 'openspec-plus-tasks' skill BEFORE writing the tasks file"
+    - "MANDATORY: Use the 'glossary' skill to ensure consistent artifact wording"
+
+operations:
+  apply:
+    guidance:
+      - "MANDATORY: Use the 'openspec-plus-apply' skill"
+      - "MANDATORY: Use the 'openspec-plus-tdd' skill for writing tests"
+  archive:
+    guidance:
+      - "MANDATORY: Invoke 'openspec-sync-specs' BEFORE archiving"

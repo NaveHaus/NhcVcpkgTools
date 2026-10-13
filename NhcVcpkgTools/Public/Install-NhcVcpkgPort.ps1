@@ -23,7 +23,9 @@ function Install-NhcVcpkgPort {
     Creates a subdirectory under OutputDir in which to build and install the ports. If a non-empty string is passed, it will be used for the directory name. Otherwise, a timestamp with format "yyyyMMdd-HHmmss" will be used as the directory name. Note that the string must be a valid file name without '/' or '\'.
 
     .PARAMETER Quiet
-    Suppresses all output from the vcpkg command, including errors.
+    Currently has no effect. vcpkg's console output is always shown, and a
+    launch failure is reported only through the Status entry of the returned
+    object, with or without -Quiet.
 
     .PARAMETER Command
     Specifies the path to the vcpkg executable to call.

@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    paths:
-      - '!.opencode/**'
+    tags:
+      - '**'
   pull_request:
     branches:
       - master

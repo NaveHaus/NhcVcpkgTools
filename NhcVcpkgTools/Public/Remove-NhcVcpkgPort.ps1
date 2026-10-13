@@ -37,7 +37,9 @@ function Remove-NhcVcpkgPort {
     Specifies where ports are installed. Defaults to <vcpkg-root>/installed.
 
     .PARAMETER Quiet
-    Suppresses all output from the vcpkg command, including errors.
+    Currently has no effect. vcpkg's console output is always shown, and a
+    launch failure is reported only through the Status entry of the returned
+    object, with or without -Quiet.
 
     .PARAMETER Force
     Suppresses confirmation prompts unless -Confirm is explicitly specified.
