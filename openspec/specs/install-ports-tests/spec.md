@@ -1,22 +1,23 @@
 # Capability: install-ports-tests
 
 ## Purpose
-TBD: Tests for `Install-NhcVcpkgPorts` to validate argument construction and output directory shaping.
+
+Define the unit-test expectations for `Install-NhcVcpkgPort`: tests exercise real argument construction and output directory shaping while staying hermetic and independent of an installed vcpkg.
 
 ## Requirements
 
 ### Requirement: Install tests validate real argument construction
-Unit tests for `Install-NhcVcpkgPorts` SHALL exercise the real `Get-CommonArguments` and `Get-TaggedOutputDir` implementations to validate the generated command-line arguments.
+Unit tests for `Install-NhcVcpkgPort` SHALL exercise the real `Get-CommonArgument` and `Get-TaggedOutputDir` implementations to validate the generated command-line arguments.
 
 #### Scenario: Ports invocation builds classic arguments
-- **WHEN** the test invokes `Install-NhcVcpkgPorts -Ports zlib` with a valid test vcpkg root
+- **WHEN** the test invokes `Install-NhcVcpkgPort -Ports zlib` with a valid test vcpkg root
 - **THEN** the resulting `Start-Process` argument list contains `install`, `zlib`, and `--classic` along with `--vcpkg-root`, `--triplet`, and `--host-triplet` entries
 
 ### Requirement: Tests remain hermetic and vcpkg-free
-Unit tests for `Install-NhcVcpkgPorts` SHALL NOT require an installed vcpkg binary or network access and SHALL mock executable validation where needed.
+Unit tests for `Install-NhcVcpkgPort` SHALL NOT require an installed vcpkg binary or network access and SHALL mock executable validation where needed.
 
 #### Scenario: External process invocation is mocked
-- **WHEN** the tests execute `Install-NhcVcpkgPorts`
+- **WHEN** the tests execute `Install-NhcVcpkgPort`
 - **THEN** `Start-Process` is mocked so no external vcpkg process is launched
 
 ### Requirement: Test fixtures provide a minimal vcpkg root
@@ -24,11 +25,11 @@ Tests SHALL construct a minimal fake vcpkg root that satisfies `Test-VcpkgRoot` 
 
 #### Scenario: Fake root satisfies validation
 - **WHEN** the tests create a directory with a `.vcpkg-root` marker and mock `Test-Executable` to return true
-- **THEN** `Install-NhcVcpkgPorts` resolves the command and root without requiring a real vcpkg installation
+- **THEN** `Install-NhcVcpkgPort` resolves the command and root without requiring a real vcpkg installation
 
 ### Requirement: Output directory shaping is verified
 Tests SHALL verify the output directory shaping behavior when `OutputDir` and `Tag` are provided.
 
 #### Scenario: OutputDir with Tag becomes ParentDir
-- **WHEN** the test invokes `Install-NhcVcpkgPorts -OutputDir <dir> -Tag release`
+- **WHEN** the test invokes `Install-NhcVcpkgPort -OutputDir <dir> -Tag release`
 - **THEN** the resulting configuration uses `<dir>\release` as the parent directory and derives download/build/package/install paths under it
