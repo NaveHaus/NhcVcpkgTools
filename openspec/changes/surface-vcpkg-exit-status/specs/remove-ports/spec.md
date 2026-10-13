@@ -1,8 +1,8 @@
 ## REMOVED Requirements
 
 ### Requirement: Quiet switch suppresses vcpkg output
-**Reason**: It stated that `-Quiet` suppresses all vcpkg output, including stdout and stderr, which does not match the module: `-Quiet` suppresses only the error records produced while attempting to start vcpkg. It also carried three argument pass-through scenarios that belong to "Common vcpkg arguments are supported".
-**Migration**: Replaced by "Quiet switch suppresses launch error records" and the `vcpkg-exit-status` capability. The three pass-through scenarios already appear under "Common vcpkg arguments are supported".
+**Reason**: It stated that `-Quiet` suppresses all vcpkg output, including stdout and stderr, which does not match the module: `-Quiet` changes neither vcpkg's console output, the error records written, nor `Status`. It also carried three argument pass-through scenarios that belong to "Common vcpkg arguments are supported".
+**Migration**: Replaced by "Quiet switch changes neither output nor Status" and the `vcpkg-exit-status` capability. The three pass-through scenarios already appear under "Common vcpkg arguments are supported".
 
 ## MODIFIED Requirements
 
@@ -28,11 +28,11 @@ The function SHALL NOT perform custom error handling or translation. When vcpkg 
 
 ## ADDED Requirements
 
-### Requirement: Quiet switch suppresses launch error records
+### Requirement: Quiet switch changes neither output nor Status
 
-The function SHALL accept a `-Quiet` switch parameter with the semantics defined by the `vcpkg-exit-status` capability: when specified, it suppresses the PowerShell error records produced while attempting to start vcpkg. It SHALL NOT suppress vcpkg's own console output and SHALL NOT change `Status`.
+The function SHALL accept a `-Quiet` switch parameter with the semantics defined by the `vcpkg-exit-status` capability: it SHALL NOT suppress vcpkg's own console output and SHALL NOT change `Status`, and a launch failure writes no error records whether or not it is specified.
 
-#### Scenario: Quiet mode suppresses launch error records
+#### Scenario: Quiet mode with a launch failure writes no error records
 - **GIVEN** the vcpkg command cannot be started
 - **WHEN** `Remove-NhcVcpkgPort -Ports 'zlib' -Quiet` is invoked
 - **THEN** no error records are written to the PowerShell error stream

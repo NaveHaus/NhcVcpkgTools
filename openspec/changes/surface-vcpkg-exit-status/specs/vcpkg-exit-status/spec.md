@@ -38,8 +38,14 @@ When vcpkg exits with a non-zero code or a **launch failure** occurs, the **port
 - **THEN** it returns the **result object** with `Status` equal to `$false`
 - **BUT** no terminating error is thrown
 
-### Requirement: Quiet suppresses only launch error records
-A **port cmdlet**'s `-Quiet` switch SHALL suppress the PowerShell error records produced while attempting to start vcpkg. `-Quiet` SHALL NOT suppress vcpkg's own console output and SHALL NOT change the `Status` entry of the **result object**.
+### Requirement: Launch failures write no error records
+When a **launch failure** occurs, a **port cmdlet** SHALL NOT write error records to the PowerShell error stream, whether or not `-Quiet` is specified; the failure is reported only through the `Status` entry of the **result object**.
+
+#### Scenario: Launch failure without Quiet writes no error records
+- **GIVEN** the vcpkg command cannot be started
+- **WHEN** a **port cmdlet** is invoked without `-Quiet`
+- **THEN** no error records are written to the PowerShell error stream
+- **AND** the **result object** has `Status` equal to `$false`
 
 #### Scenario: Launch failure with Quiet writes no error records
 - **GIVEN** the vcpkg command cannot be started
@@ -47,16 +53,18 @@ A **port cmdlet**'s `-Quiet` switch SHALL suppress the PowerShell error records 
 - **THEN** no error records are written to the PowerShell error stream
 - **AND** the **result object** has `Status` equal to `$false`
 
-#### Scenario: Launch failure without Quiet writes error records
-- **GIVEN** the vcpkg command cannot be started
-- **WHEN** a **port cmdlet** is invoked without `-Quiet`
-- **THEN** the error records produced while attempting to start vcpkg are written to the PowerShell error stream
-- **AND** the **result object** has `Status` equal to `$false`
+### Requirement: Quiet changes neither console output nor Status
+A **port cmdlet**'s `-Quiet` switch SHALL NOT suppress vcpkg's own console output and SHALL NOT change the `Status` entry of the **result object**.
 
 #### Scenario: Quiet does not hide vcpkg console output
 - **GIVEN** a vcpkg process that writes progress and error text to its standard output and standard error
 - **WHEN** a **port cmdlet** is invoked with `-Quiet`
 - **THEN** vcpkg's text still appears on the console
+
+#### Scenario: Quiet does not change Status
+- **GIVEN** a vcpkg process that exits with a non-zero code
+- **WHEN** a **port cmdlet** is invoked once with `-Quiet` and once without
+- **THEN** both **result objects** have `Status` equal to `$false`
 
 ### Requirement: vcpkg output goes to the console
 vcpkg's standard output and standard error SHALL be shown on the console of the PowerShell host running the **port cmdlet**. A **port cmdlet** SHALL NOT capture vcpkg's output into the **result object** or re-emit it as PowerShell error records.
